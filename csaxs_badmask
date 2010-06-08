@@ -1,0 +1,4 @@
+#!/bin/bash
+
+exec python /home/ikonen/python/agbeh/find_bad_pixels.py $*
+
