@@ -7,26 +7,79 @@ description="Write a bad pixel mask based on analysis of a series of input frame
 usage="%prog -o <output.png> [cbf-dir | file1.cbf file2.cbf ...]"
 
 
-def get_pilatus2m_gaps():
-    """Return a mask with the cSAXS pilatus 2M module gaps"""
+def pilatus2m_gaps(chipgaps=False, chipedges=2):
+    """Return a mask with the cSAXS pilatus 2M pixel gaps.
+
+    Pilatus 2M at cSAXS gives a frame of 1679 x1475 pixels. The detector is
+    composed of 3 x 8 modules with 487 x 195 pixels in each module.
+    The insensitive areas between modules are 7 pixels wide horizontally
+    and 17 pixels wide vertically.
+
+    Each module is composed of 8 x 2 chips with 60 x 97 pixels in each chip.
+    There appears to be a 1 pixel physical gap between chips, resulting
+    in total module size of 8*60 + 7 = 487 times 2*97 + 1 = 195 pixels.
+    The counts in this missing pixel are apparently fabricated by the
+    detector firmware from neighbouring pixel values.
+
+    The gap pixel and the pixels at the chip edges (1 or 2 pixels, not sure)
+    produce count distributions which have ok mean values, but bad higher
+    moments, i.e. variance which is either lower (gap pixels) or higher
+    (edge pixels) than in the pixels in the center of the chip.
+
+    Input parameters:
+        `chipgaps` : If True, then also the chip gaps and edges are masked.
+        `chipedges`: The number of pixels to mask in the edges of
+            the pixels (0 to 2 are reasonable values).
+    """
     # shape of pilatus array
     pshape = (1679, 1475)
-    # shape of a single module
+    # shape of a single module (without gap strips)
     mshape = (195, 487)
-    # width of dead column strip
-    dcw = 7
-    # width of dead row strip
-    drw = 17
-    # start indices of dead strips
-    colstarts = [487, 981]
-    rowstarts = range(195, 1679, 212)
+    # shape of a single chip
+    cshape = (97, 60)
+    # width of column module gap
+    mgcw = 7
+    # width of row module gap
+    mgrw = 17
+    # width of the chip gap
+    cgw = 1
+    # width of unreliable region at the chip edge
+    cew = chipedges
 
-    dcols = reduce(lambda a,b: a + b, [ range(s, s+dcw) for s in colstarts])
-    drows = reduce(lambda a,b: a + b, [ range(s, s+drw) for s in rowstarts])
+    # First columns and rows of modules
+    modstartrows = range(0, pshape[0], mshape[0]+mgrw)
+    modstartcols = range(0, pshape[1], mshape[1]+mgcw)
 
-    mask = np.ones(pshape, dtype=np.int8)
-    mask[drows,:] = 0
-    mask[:,dcols] = 0
+    catl = lambda a,b: a + b
+    modgaprows = reduce(catl, [ range(s-mgrw, s) for s in modstartrows[1:]])
+    modgapcols = reduce(catl, [ range(s-mgcw, s) for s in modstartcols[1:]])
+
+    mask = np.ones(pshape, dtype=np.bool)
+    mask[modgaprows,:] = False
+    mask[:,modgapcols] = False
+
+    # First columns and rows of chips in a module
+    chipstartrows = range(0, mshape[0], cshape[0]+cgw)
+    chipstartcols = range(0, mshape[1], cshape[1]+cgw)
+
+    chipgaprows = [ m + g for m in modstartrows
+                          for g in [ s-1 for s in chipstartrows[1:]] ]
+    chipgapcols = [ m + g for m in modstartcols
+                          for g in [ s-1 for s in chipstartcols[1:]] ]
+
+    chipedgerows = reduce(catl, [range(s,s+cew)+range(s+cshape[0]-cew,s+cshape[0])
+                                for s in [ m + c
+                                            for m in modstartrows
+                                            for c in chipstartrows ]])
+    chipedgecols = reduce(catl, [range(s,s+cew)+range(s+cshape[1]-cew,s+cshape[1])
+                                for s in [ m + c
+                                            for m in modstartcols
+                                            for c in chipstartcols ]])
+    if chipgaps:
+        mask[chipgaprows,:] = False
+        mask[:,chipgapcols] = False
+        mask[chipedgerows,:] = False
+        mask[:,chipedgecols] = False
 
     return mask
 
