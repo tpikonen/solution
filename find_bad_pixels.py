@@ -1,5 +1,7 @@
 import numpy as np
-from sasformats import read_cbf, write_pnglog
+import numpy.ma as ma
+import scipy.signal
+from detformats import read_cbf, write_pnglog
 from optparse import OptionParser
 
 description="Write a bad pixel mask based on analysis of a series of input frames"
@@ -7,7 +9,7 @@ description="Write a bad pixel mask based on analysis of a series of input frame
 usage="%prog -o <output.png> [cbf-dir | file1.cbf file2.cbf ...]"
 
 
-def pilatus2m_gaps(chipgaps=False, chipedges=2):
+def pilatus2m_gapmask(chipgaps=False, chipedges=2):
     """Return a mask with the cSAXS pilatus 2M pixel gaps.
 
     Pilatus 2M at cSAXS gives a frame of 1679 x1475 pixels. The detector is
@@ -84,9 +86,9 @@ def pilatus2m_gaps(chipgaps=False, chipedges=2):
     return mask
 
 
-logical_plus = np.logical_or
+bool_add = ma.mask_or
 
-def logical_minus(A, B):
+def bool_sub(A, B):
     """Array logical operation 'A - B', equal to ( A and (not B) ).
     Truth table:
 
@@ -98,45 +100,63 @@ def logical_minus(A, B):
     """
     return np.logical_and(A, np.logical_not(B))
 
-def find_bad_pixels(files, hot_threshold=np.inf, var_factor=5.0):
+def find_bad_pixels(files, hot_threshold=np.inf, var_factor=5.0, chipgaps=False):
     """Return a mask where pixels determined as dead or hot are masked"""
 
-    # FIXME: Do median filtering on each frame and check for anomalies?
-
     dead_threshold = 1
+    medfilt_std_reject = 3.0
+    laplace_threshold = 500.0
+
+    # Laplace operator with diagonals, see
+    # http://en.wikipedia.org/wiki/Discrete_Laplace_operator
+    laplace = np.ones((3,3), dtype=np.float64)
+    laplace[1,1] = -8.0
+
 
     f0 = read_cbf(files[0])
     s = f0.im.shape
-    A = np.zeros((len(files), s[0], s[1]))
-    m_hots = np.zeros((s[0], s[1]), dtype=np.bool)
+    # Boolean arrays of various invalid pixels (logical_not of a mask!)
+    a_hots = ma.make_mask_none((s[0], s[1]))
+    # array for pixels consistently deviating from median filtered
+    a_medf = np.ones((s[0], s[1]), dtype=np.bool)
+
+    Asum = np.zeros((s[0], s[1]), dtype=np.float64)
+    Asumsq = np.zeros((s[0], s[1]), dtype=np.float64)
     for i in range(0,len(files)):
-        tim = (read_cbf(files[i])).im
-        m_hots = logical_plus(m_hots, (tim > hot_threshold))
-        A[i,:,:] = tim
+        tim = (read_cbf(files[i])).im.astype(np.float64)
+        Asum += tim
+        Asumsq += tim**2.0
+        a_hots = bool_add(a_hots, (tim > hot_threshold))
+        mfilt = scipy.signal.medfilt2d(tim, kernel_size=3)
+        deviates = (np.abs(tim - mfilt) > medfilt_std_reject*np.sqrt(tim))
+        lapm = (np.abs(scipy.signal.convolve2d(laplace, mfilt, mode='same')) < laplace_threshold)
+        deviates = deviates * lapm
+        a_medf = a_medf * deviates
 
-    sA = np.sum(A, axis=0, dtype=np.float64)
-    mA = np.mean(A, axis=0, dtype=np.float64)
-    vA = np.var(A, axis=0, dtype=np.float64)
+    sA = Asum
+    mA = Asum / float(len(files))
+    Esq = Asumsq / float(len(files))
+    vA = Esq - mA**2
 
-    m_gaps = (get_pilatus2m_gaps() == 0)
-    m_consts = logical_minus((vA == 0),  m_gaps)
-#    m_randoms = ((var_factor*vA) > mA)
-    m_randoms = False # Something strange with variance, disabling for now
-    m_deads = logical_minus((sA < dead_threshold),  m_gaps)
+    a_gaps = np.logical_not(pilatus2m_gapmask(chipgaps=chipgaps))
+    a_consts = bool_sub((vA == 0),  a_gaps)
+#    a_randoms = ((var_factor*vA) > mA)
+    a_randoms = False # Something strange with variance, disabling for now
+    a_deads = bool_sub((sA < dead_threshold),  a_gaps)
     # total bads outside gaps
-    m_bads = logical_plus(logical_plus(m_consts, m_randoms), \
-                            logical_plus(m_hots, m_deads) )
+    a_bads = reduce(bool_add, [a_consts, a_randoms, a_hots, a_deads, a_medf])
 
-    print("Module gaps have %d invalid pixels" % (np.sum(m_gaps)))
-    nconsts = np.sum(m_consts)
-    print("Found %d constant pixels outside gaps, %d are >= %d" % \
-            (nconsts, (nconsts - np.sum(m_deads)), dead_threshold))
+    print("%d invalid pixels in module gaps" % (np.sum(a_gaps)))
+    nconsts = np.sum(a_consts)
+    print("%d constant pixels outside gaps, %d are >= %d" % \
+            (nconsts, (nconsts - np.sum(a_deads)), dead_threshold))
 #    print("Found %d pixels with variance larger than %f * mean" % (np.sum(m_randoms), var_factor))
-    print("Found %d hot (count > %e) pixels" % (np.sum(m_hots), hot_threshold))
-    print("Total of %d bad pixels outside of gaps" % (np.sum(m_bads)))
-    mask = np.ones((s[0], s[1]), dtype=np.int8)
-    mask = mask - logical_plus(m_bads, m_gaps)
-    print("Mask has a total of %d bad pixels" % (np.sum(mask == 0)))
+    print("%d hot (count > %e) pixels" % (np.sum(a_hots), hot_threshold))
+    print("%d pixels consistently deviating from median" % (np.sum(a_medf)))
+    print("Total of %d bad pixels outside of gaps" % (np.sum(a_bads)))
+    mask = np.ones((s[0], s[1]), dtype=np.bool)
+    mask = bool_sub(mask, bool_add(a_bads, a_gaps))
+    print("Mask has a total of %d bad pixels" % (np.sum(mask == False)))
 
     return mask
 
@@ -149,6 +169,9 @@ def main():
         action="store", type="string", dest="outfile", default="")
     oprs.add_option("-t", "--hot-threshold",
         action="store", type="float", dest="hot_threshold", default=np.inf)
+    oprs.add_option("-c", "--chipgaps",
+        action="store_true", dest="chipgaps", default=False,
+        help="Mask also chip gaps in addition to module gaps")
     (opts, args) = oprs.parse_args()
 
     files = []
@@ -169,7 +192,8 @@ def main():
         print >> sys.stderr, "Output file name is missing"
         sys.exit(1)
 
-    mask = find_bad_pixels(files, hot_threshold=opts.hot_threshold)
+    mask = find_bad_pixels(files, hot_threshold=opts.hot_threshold,
+                            chipgaps=opts.chipgaps)
     write_pnglog(mask, outfile)
 
 
