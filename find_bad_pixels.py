@@ -122,6 +122,33 @@ def pilatus1m_gapmask(chipgaps=False, chipedges=2):
     return pilatus_gapmask((5,2), chipgaps, chipedges)
 
 
+def match_shape_to_pilatus(inshape):
+    """Return a pilatus module configuration matching a shape.
+
+    If a match is not found, returns None.
+    """
+    # shape of a single module (without gap strips)
+    mshape = (195, 487)
+    # width of column module gap
+    mgcw = 7
+    # width of row module gap
+    mgrw = 17
+
+    def checkit(p, m, g):
+        a = p + g
+        b = m + g
+        if a % b == 0:
+            return a // b
+        else:
+            return None
+
+    y = checkit(inshape[0], mshape[0], mgrw)
+    x = checkit(inshape[1], mshape[1], mgcw)
+    if y is not None and x is not None:
+        return (y,x)
+    else:
+        return None
+
 bool_add = ma.mask_or
 
 
