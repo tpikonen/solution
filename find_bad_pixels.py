@@ -9,32 +9,32 @@ description="Write a bad pixel mask based on analysis of a series of input frame
 usage="%prog -o <output.png> [cbf-dir | file1.cbf file2.cbf ...]"
 
 
-def pilatus2m_gapmask(chipgaps=False, chipedges=2):
-    """Return a mask with the cSAXS pilatus 2M pixel gaps.
+def pilatus_gapmask(modules, chipgaps=False, chipedges=2):
+    """Return a mask for a Pilatus detector with a given module configuration.
 
-    Pilatus 2M at cSAXS gives a frame of 1679 x1475 pixels. The detector is
-    composed of 3 x 8 modules with 487 x 195 pixels in each module.
+    Pilatus 2M at cSAXS gives a frame of 1679 x1475 pixels. The
+    Pilatus detectors are composed of modules with 487 x 195 pixels in each.
     The insensitive areas between modules are 7 pixels wide horizontally
     and 17 pixels wide vertically.
 
     Each module is composed of 8 x 2 chips with 60 x 97 pixels in each chip.
     There appears to be a 1 pixel physical gap between chips, resulting
     in total module size of 8*60 + 7 = 487 times 2*97 + 1 = 195 pixels.
-    The counts in this missing pixel are apparently fabricated by the
+    The counts in this missing pixel are (apparently) calculated by the
     detector firmware from neighbouring pixel values.
 
-    The gap pixel and the pixels at the chip edges (1 or 2 pixels, not sure)
+    The gap pixel and the pixels at the chip edges (1 or 2 pixels)
     produce count distributions which have ok mean values, but bad higher
     moments, i.e. variance which is either lower (gap pixels) or higher
     (edge pixels) than in the pixels in the center of the chip.
 
     Input parameters:
-        `chipgaps` : If True, then also the chip gaps and edges are masked.
+        `modules` : Sequence of length 2 giving the module configuration,
+            e.g. (5, 2) for Pilatus 1M.
+        `chipgaps`: If True, then also the chip gaps and edges are masked.
         `chipedges`: The number of pixels to mask in the edges of
             the pixels (0 to 2 are reasonable values).
     """
-    # shape of pilatus array
-    pshape = (1679, 1475)
     # shape of a single module (without gap strips)
     mshape = (195, 487)
     # shape of a single chip
@@ -47,6 +47,10 @@ def pilatus2m_gapmask(chipgaps=False, chipedges=2):
     cgw = 1
     # width of unreliable region at the chip edge
     cew = chipedges
+
+    # shape of the whole detector
+    pshape = (modules[0]*mshape[0] + (modules[0]-1)*mgrw,
+              modules[1]*mshape[1] + (modules[1]-1)*mgcw)
 
     # First columns and rows of modules
     modstartrows = range(0, pshape[0], mshape[0]+mgrw)
@@ -84,6 +88,38 @@ def pilatus2m_gapmask(chipgaps=False, chipedges=2):
         mask[:,chipedgecols] = False
 
     return mask
+
+
+def pilatus2m_gapmask(chipgaps=False, chipedges=2):
+    """Return a mask with the Pilatus 2M gaps.
+
+    Pilatus 2M is composed of 3 x 8 modules and outputs a frame of
+    1679 x1475 pixels.
+
+    See function `pilatus_gapmask` for further details.
+
+    Input parameters:
+        `chipgaps` : If True, then also the chip gaps and edges are masked.
+        `chipedges`: The number of pixels to mask in the edges of
+            the pixels (0 to 2 are reasonable values).
+    """
+    return pilatus_gapmask((8,3), chipgaps, chipedges)
+
+
+def pilatus1m_gapmask(chipgaps=False, chipedges=2):
+    """Return a mask with the Pilatus 1M gaps.
+
+    Pilatus 1M is composed of 2 x 5 modules and outputs a frame of
+    1043 x 981 pixels.
+
+    See function `pilatus_gapmask` for further details.
+
+    Input parameters:
+        `chipgaps` : If True, then also the chip gaps and edges are masked.
+        `chipedges`: The number of pixels to mask in the edges of
+            the pixels (0 to 2 are reasonable values).
+    """
+    return pilatus_gapmask((5,2), chipgaps, chipedges)
 
 
 bool_add = ma.mask_or
