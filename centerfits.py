@@ -62,15 +62,13 @@ def plotcens(arrlist):
     plt.plot(xs, ys, '+')
 
 
-def mark_cross(center, plotfmt='w'):
+def mark_cross(center, **kwargs):
+    """Mark a cross. Correct for matplotlib imshow funny coordinate system.
+    """
     N = 20
     plt.hold(1)
-    x = np.arange((center[0]-N), (center[0]+N))
-    y = center[1]*np.ones_like(x)
-    plt.plot(x, y, plotfmt)
-    y = np.arange((center[1]-N), (center[1]+N))
-    x = center[0]*np.ones_like(y)
-    plt.plot(x, y, plotfmt)
+    plt.axhline(y=center[1]-0.5, **kwargs)
+    plt.axvline(x=center[0]-0.5, **kwargs)
 
 
 def plotstart(image, startcen, mask=None,  plotit=True):
@@ -86,7 +84,7 @@ def plotstart(image, startcen, mask=None,  plotit=True):
             logshow(image*mask)
         plt.hold(1)
         ax = plt.axis()
-        mark_cross(startcen, 'y')
+        mark_cross(startcen, color='yellow', linestyle='--')
         plt.axis(ax)
         plt.draw()
 #        plt.show()
@@ -96,7 +94,7 @@ def plotstart(image, startcen, mask=None,  plotit=True):
 def plotend(startcen, optcen, plotit=True):
     if(plotit):
         ax = plt.axis()
-        mark_cross(optcen)
+        mark_cross(optcen, color='white')
         plt.axis(ax)
         dd = max(np.linalg.norm(startcen - optcen), 10)
         llo = optcen - 4*dd
