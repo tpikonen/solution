@@ -1,6 +1,6 @@
+import warnings, scipy.signal
 import numpy as np
 import numpy.ma as ma
-import scipy.signal
 from detformats import read_cbf, write_pnglog
 from optparse import OptionParser
 
@@ -187,6 +187,12 @@ def find_bad_pixels(files, hot_threshold=np.inf, var_factor=5.0, chipgaps=False)
 
     f0 = read_cbf(files[0])
     s = f0.im.shape
+    modules = match_shape_to_pilatus(s)
+    if modules is None:
+        warnings.warn("Frame shape does not match any Pilatus. Not using a gap mask.")
+        a_gaps = np.zeros(s)
+    else:
+        a_gaps = np.logical_not(pilatus_gapmask(modules, chipgaps=chipgaps))
     # Boolean arrays of various invalid pixels (logical_not of a mask!)
     # Pixels above hot_threshold
     a_hots = ma.make_mask_none((s[0], s[1]))
@@ -218,7 +224,6 @@ def find_bad_pixels(files, hot_threshold=np.inf, var_factor=5.0, chipgaps=False)
     Esq = Asumsq / float(len(files))
     vA = Esq - mA**2
 
-    a_gaps = np.logical_not(pilatus2m_gapmask(chipgaps=chipgaps))
     a_consts = bool_sub((vA == 0),  a_gaps)
 #    a_randoms = ((var_factor*vA) > mA)
     a_randoms = False # Something strange with variance, disabling for now
