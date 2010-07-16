@@ -1,20 +1,32 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.mlab as mlab
 import modelfit as mf
 from centerfits import fwhm
 
-def qagbeh(Iagbeh, first_index, wavel=0.1, Dlatt=5.8380):
+def get_firstpeak(Iagbeh):
+    """Return an estimate for the first peak position in AgBeh scattering.
+    """
+    dlog = np.diff(np.log(Iagbeh))
+    highs = 1.0*(dlog > 0.5*np.nanmax(dlog))
+    peaks = mlab.find(np.diff(highs) < -0.5)
+    return peaks[0]
+
+
+def qagbeh(Iagbeh, first_index=None, wavel=0.1, Dlatt=5.8380):
     """Return q-scale optimized from silver behenate scattering.
 
-    The argument `first_index` must be the approximate index of
-    the first AgBeh-reflection in the intensity array.
-
     Keyword arguments:
-        `wavel` : Wavelength of the radiation in nanometers (!)
-        `Dlatt` : Lattice spacing in nm, default 5.8380 nm for AgBeh
+        `first_index` : Approximate index of the first AgBeh-reflection
+            in the `Iagbeh`. If None, then it is estimated with a heuristic.
+        `wavel` : Wavelength of the radiation in nanometers (!).
+        `Dlatt` : Lattice spacing in nm, default 5.8380 nm for AgBeh.
     """
     #FIXME: Use argmin(diff(diff(rfft(Iagbe)*rfft(Iagbe).conj())))
     #to determine the first_index ab initio?
+
+    if first_index is None:
+        first_index = get_firstpeak(Iagbeh)
 
     if len(Iagbeh) < first_index:
         raise ValueError("first_index must be inside the intensity array.")
