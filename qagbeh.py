@@ -13,7 +13,7 @@ def get_firstpeak(Iagbeh):
     return peaks[0]
 
 
-def qagbeh(Iagbeh, first_index=None, wavel=0.1, Dlatt=5.8380):
+def qagbeh(Iagbeh, first_index=None, wavel=0.1, Dlatt=5.8380, peaks=None):
     """Return q-scale optimized from silver behenate scattering.
 
     Keyword arguments:
@@ -21,18 +21,22 @@ def qagbeh(Iagbeh, first_index=None, wavel=0.1, Dlatt=5.8380):
             in the `Iagbeh`. If None, then it is estimated with a heuristic.
         `wavel` : Wavelength of the radiation in nanometers (!).
         `Dlatt` : Lattice spacing in nm, default 5.8380 nm for AgBeh.
+        `peaks` : A list of all approximate peak indices (should be supplied
+            only if automatic peak detection fails)
     """
-    #FIXME: Use argmin(diff(diff(rfft(Iagbe)*rfft(Iagbe).conj())))
-    #to determine the first_index ab initio?
 
-    if first_index is None:
-        first_index = get_firstpeak(Iagbeh)
+    width_per_firstindex = 0.1 # Peak width in units of first peaks position
 
-    if len(Iagbeh) < first_index:
-        raise ValueError("first_index must be inside the intensity array.")
-    W = int(first_index // 4) # FIXME: This value is only suitable for AgBeh
-    peaks = np.arange(first_index, len(Iagbeh)-W, first_index)
+    if peaks is None:
+        if first_index is None:
+            first_index = get_firstpeak(Iagbeh)
 
+        if len(Iagbeh) < first_index:
+            raise ValueError("first_index must be inside the intensity array.")
+        W = int(first_index * width_per_firstindex)
+        peaks = np.arange(first_index, len(Iagbeh)-W, first_index)
+
+    W = int(peaks[0] * width_per_firstindex)
     npeaks = len(peaks)
     opos = []
     optpars = []
