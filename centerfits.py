@@ -1,4 +1,4 @@
-import sys
+import sys, re
 import numpy as np
 import numpy.ma as ma
 import matplotlib.mlab as mlab
@@ -320,6 +320,13 @@ def centerfit_sectors(image, startcen=None, ringstart=120, ringend=220, secwidth
     return optcen
 
 
+def parse_center(center_str):
+    mob = re.match(' *([0-9.]+)[,]([0-9.]+) *', center_str)
+    if mob is None or len(mob.groups()) != 2:
+        return None
+    else:
+        return (float(mob.group(1)), float(mob.group(2)))
+
 # Command line interface
 
 def main():
@@ -329,7 +336,18 @@ def main():
         help="Do not plot the frame and center")
     oprs.add_option("-m", "--maskfile",
         action="store", type="string", dest="maskfile", default=None)
+    oprs.add_option("-c", "--center",
+        action="store", type="string", dest="inicen_str", default=None)
     (opts, args) = oprs.parse_args()
+
+    inicen = None
+    if opts.inicen_str is not None:
+        inicen = parse_center(opts.inicen_str)
+        if inicen is None:
+            print >> sys.stderr, oprs.format_help()
+            print >> sys.stderr, "Could not parse center"
+            sys.exit(1)
+        print("Using " + str(inicen) + " as initial center.")
     if(len(args) < 1):
         print >> sys.stderr, oprs.format_help()
         print >> sys.stderr, "At least one input file is needed"
@@ -345,7 +363,10 @@ def main():
     cens = np.zeros((len(args), 2))
     agbe = read_cbf(args[0])
     print(args[0])
-    startcen = init_func(agbe.im, mask=mask)
+    if inicen is None:
+        startcen = init_func(agbe.im, mask=mask)
+    else:
+        startcen = inicen
     print(startcen)
     for i in range(0, len(args)):
         agbe = read_cbf(args[i])
