@@ -90,6 +90,7 @@ def qagbeh(Iagbeh, first_index=None, wavel=0.1, Dlatt=5.8380, peaks=None):
     print("S-to-D = %g pixels (%g mm for Pilatus)" % (L, L*0.172))
     q = (4*np.pi/wavel)*np.sin(0.5*np.arctan(np.arange(len(Iagbeh))/L))
 #   fitted_peakpos = (4*np.pi/wavel)*np.sin(0.5*np.arctan(opos/L))
+    plt.clf()
     plt.subplot(121)
     plt.plot(N, channo([L, wavel], N)/opos -1, "+", np.arange(len(N)+2), np.zeros(len(N)+2))
     plt.title("Deviation of theoretical peak positions from fitted positions")
