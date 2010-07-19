@@ -214,7 +214,7 @@ def find_bad_pixels(files, hot_threshold=np.inf, var_factor=5.0, chipgaps=False)
             boundary='symm', old_behavior=0)) < laplace_threshold)
         absdev = np.abs(tim - mfilt)
         # Pixels deviating somewhat from median, not in curved regions
-        mrej = (medfilt_var_reject < (absdev/(mfilt+1))) * lapm
+        mrej = (medfilt_var_const < (absdev/(mfilt+1))) * lapm
         a_medf = a_medf * mrej
         # Pixels deviating grossly from median filtered
         a_gross = bool_add(a_gross, (medfilt_var_gross < (absdev/(mfilt+1))) * lapm)
