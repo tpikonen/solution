@@ -174,7 +174,7 @@ def write_pnglog(a, fname):
     fp.close()
 
 
-def read_cbf(fname, have_pycbf=1):
+def read_cbf(fname, have_cbflib=1):
     """Read CBFs (Crystallographic Binary File) output from the
     Pilatus detector at cSAXS.
     """
@@ -221,8 +221,9 @@ def read_cbf(fname, have_pycbf=1):
     m = re.search(BINARY_SIGNATURE, hdr)
     datastart = int(m.end(0))
 
-    if have_pycbf:
-        d.im = offset_decompress_pycbf(fname, [xdim, ydim])
+    if have_cbflib:
+        fid.close()
+        d.im = offset_decompress_cbflib(fname, [xdim, ydim])
     else:
         fid.seek(datastart)
         dstr = fid.read(bsize)
@@ -232,19 +233,30 @@ def read_cbf(fname, have_pycbf=1):
     return d
 
 
-def offset_decompress_pycbf(fname, dims):
-    """Decompression of BYTE_OFFSET packing, CBFlib implementation"""
-    import pycbf
-    h = pycbf.cbf_handle_struct()
-    h.read_file(fname,pycbf.MSG_DIGEST)
+def offset_decompress_cbflib(fname, dims):
+    """Read the binary array from a Pilatus CBF file with CBFlib."""
+    import cbf
+    h = cbf.CBF(fname)
     h.select_datablock(0)
     h.select_category(0)
     h.select_column(2)
-    if h.get_typeofvalue().find("bnry") < 0:
-        raise ValueError("CBF Binary block not in the usual place")
-    s = h.get_integerarray_as_string()
-    d = np.fromstring(s, dtype='i4')
-    return d.reshape(dims)
+    d, _ = h.get()
+    return d
+
+
+#def offset_decompress_pycbf(fname, dims):
+#    """Decompression of BYTE_OFFSET packing, CBFlib implementation"""
+#    import pycbf
+#    h = pycbf.cbf_handle_struct()
+#    h.read_file(fname,pycbf.MSG_DIGEST)
+#    h.select_datablock(0)
+#    h.select_category(0)
+#    h.select_column(2)
+#    if h.get_typeofvalue().find("bnry") < 0:
+#        raise ValueError("CBF Binary block not in the usual place")
+#    s = h.get_integerarray_as_string()
+#    d = np.fromstring(s, dtype='i4')
+#    return d.reshape(dims)
 
 
 def offset_decompress_python(dstr, dims):
