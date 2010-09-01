@@ -133,7 +133,6 @@ def read_id2(fname):
     d = det_struct()
     d.header = hdr
     d.im = edf.GetData(0)
-    d.jorma = 4.0
     d.xo = getfl("Center_1")
     d.yo = getfl("Center_2")
     d.int0 = getfl("Intensity0")
