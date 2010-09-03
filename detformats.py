@@ -173,16 +173,36 @@ def write_pnglog(a, fname):
     fp.close()
 
 
-def read_cbf(fname, have_cbflib=1):
-    """Read CBFs (Crystallographic Binary File) output from the
-    Pilatus detector at cSAXS.
+def read_cbf(filename, have_cbflib=1):
+    """Read CBF output from the Pilatus detector at cSAXS.
     """
-    # TI 2010-03-03
-    import re
+    import os, re, tempfile
 
     MAXHEADER = 4096
     CBF_SIGNATURE = "###CBF: VERSION"
     BINARY_SIGNATURE = '\x0c\x1a\x04\xd5'
+
+    def write_to_temp(fin):
+        tf = tempfile.NamedTemporaryFile(suffix=".read_cbf", delete=False)
+        tf.file.write(fin.read())
+        fin.close()
+        tf.file.close()
+        return tf.name
+
+    file_is_temporary = False
+    # FIXME: Use magic to detect file type.
+    if filename.endswith(".bz2"):
+        import bz2
+        fin = bz2.BZ2File(filename, mode='r')
+        fname = write_to_temp(fin)
+        file_is_temporary = True
+    elif filename.endswith(".gz"):
+        import gzip
+        fin = gzip.GzipFile(filename, mode='r')
+        fname = write_to_temp(fin)
+        file_is_temporary = True
+    else:
+        fname = filename
     fid = open(fname)
     hdr = fid.read(MAXHEADER)
     if(hdr[0:15] != "###CBF: VERSION"):
@@ -228,6 +248,9 @@ def read_cbf(fname, have_cbflib=1):
         dstr = fid.read(bsize)
         fid.close()
         d.im = offset_decompress_python(dstr, [xdim, ydim])
+
+    if file_is_temporary:
+        os.remove(fname)
 
     return d
 
