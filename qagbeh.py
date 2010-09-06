@@ -25,41 +25,33 @@ def qagbeh(Iagbeh, first_index=None, wavel=0.1, Dlatt=5.8380, peaks=None):
             only if automatic peak detection fails)
     """
 
-    width_per_firstindex = 0.1 # Peak width in units of first peaks position
+    width_per_firstindex = 0.1 # Peak half width in units of first peak position
 
     if peaks is None:
         if first_index is None:
             first_index = get_firstpeak(Iagbeh)
-
         if len(Iagbeh) < first_index:
             raise ValueError("first_index must be inside the intensity array.")
-        W = int(first_index * width_per_firstindex)
-        peaks = np.arange(first_index, len(Iagbeh)-W, first_index)
+        endcutoff = 2*int(first_index * width_per_firstindex)
+        peaks = np.arange(first_index, len(Iagbeh)-endcutoff, first_index)
 
-    W = int(peaks[0] * width_per_firstindex)
+    # Use wider range around the peak for finding initial fitting parameters
+    Wini = 2*int(peaks[0] * width_per_firstindex)
+    Wfit = int(peaks[0] * width_per_firstindex)
     npeaks = len(peaks)
     opos = []
     optpars = []
     for i in range(len(peaks)):
-        cen = peaks[i]
-        chan = int(cen)
-        inds = np.arange(chan-W, chan+W)
+        chan = int(peaks[i])
+        inds = np.arange(chan-Wini, chan+Wini)
         heightini = np.max(Iagbeh[inds])
         cenini = inds[np.argmax(Iagbeh[inds])]
         sigini = fwhm(inds, Iagbeh[inds]) / (2*np.sqrt(np.log(2)))
-
-#        ginit = [0.0, 0.0, heightini, cenini, sigini]
-#        mf.plotmodel(mf.gaussline, ginit, inds, Iagbeh[inds], Iagbeh[inds])
-#        (gopt, chisq) = mf.modelfit(mf.gaussline, ginit, inds, Iagbeh[inds],
-#            Iagbeh[inds])
-#        opos.append(gopt[3])
-
         linit = [10.0*heightini, cenini, sigini, 0.0]
-#        mf.plotmodel(mf.lorentzconstant, linit, inds, Iagbeh[inds],
-#            Iagbeh[inds])
-        (lopt, chisq) = mf.modelfit(mf.lorentzconstant, linit, inds,
-            Iagbeh[inds], Iagbeh[inds], noplot=1)
-        optpars.append((lopt, inds))
+        fitinds = np.arange(cenini-Wfit, cenini+Wfit)
+        (lopt, chisq) = mf.modelfit(mf.lorentzconstant, linit, fitinds,
+            Iagbeh[fitinds], Iagbeh[fitinds], noplot=1)
+        optpars.append((lopt, fitinds))
         opos.append(lopt[1])
 
     opos = np.array(opos)
