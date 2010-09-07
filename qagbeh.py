@@ -1,12 +1,23 @@
+import sys, os.path, glob
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
+import csaxsformats, detformats, loopyaml
+import radbin as r
 import modelfit as mf
 from centerfits import fwhm
+from optparse import OptionParser
+
+description="Determine q-scale from a diffraction standard giving equally spaced peaks,\n silver behenate by default."
+
+usage="%prog -b <radindfile.pickle> [-o <outputfile.yaml>] file.cbf"
+
 
 def get_firstpeak(Iagbeh):
     """Return an estimate for the first peak position in AgBeh scattering.
     """
+    #FIXME: Smooth the curve before differentiating (Maybe with smoothing
+    # routine from Chris?).
     dlog = np.diff(np.log(Iagbeh))
     highs = 1.0*(dlog > 0.5*np.nanmax(dlog))
     peaks = mlab.find(np.diff(highs) < -0.5)
@@ -97,5 +108,50 @@ def qagbeh(Iagbeh, first_index=None, wavel=0.1, Dlatt=5.8380, peaks=None):
         plt.axvline(q[np.round(fopt[1])], color='red')
     for ppos in qn:
         plt.axvline(ppos, color='blue')
-    return q
+
     plt.hold(0)
+    plt.show()
+
+    return q
+
+
+def fail(oprs, msg):
+    print >> sys.stderr, oprs.format_help()
+    print >> sys.stderr, msg
+    sys.exit(1)
+
+
+def main():
+    framefile_ext = 'cbf'
+    oprs = OptionParser(usage=usage, description=description)
+    oprs.add_option("-b", "--bins",
+        action="store", type="string", dest="binfile", default=None,
+        help="Read bins from a 'radind.pickle' file (output of function radbin.make_radind).")
+    oprs.add_option("-o", "--output",
+        action="store", type="string", dest="outfile", default="qscale.yaml",
+        help="Output file containing the q-scale in looped YAML format. Default is 'qscale.yaml'")
+    (opts, args) = oprs.parse_args()
+
+    if len(args) == 1:
+        fname = args[0]
+#    elif(len(args) == 1 and os.path.isdir(args[0])):
+    else:
+        fail(oprs, "One input file required.")
+
+    if opts.binfile:
+        radind = csaxsformats.read_pickle(opts.binfile)
+    else:
+        fail(oprs, "Binfile name is missing.")
+
+    if not "indices" in radind:
+        fail(oprs, "Binfile is missing 'indices' key.")
+
+    frame = detformats.read_cbf(fname)
+    Iagbeh = r.binstats(radind['indices'], frame.im)[0] # Get the mean
+
+    q = qagbeh(Iagbeh)
+    lq = loopyaml.Loopdict({'q': map(float, list(q))}, ['q'])
+    csaxsformats.write_yaml(lq, opts.outfile)
+
+if __name__ == "__main__":
+    main()
