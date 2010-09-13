@@ -4,7 +4,6 @@ import loopyaml
 import numpy as np
 import radbin as r
 from detformats import read_cbf, read_spec
-#from atsasformats import write_dat
 from csaxsformats import write_yaml, read_ydat
 from scipy.io.matlab import savemat
 
@@ -220,33 +219,3 @@ def stack_files(idict, spec, q, radind, outdir):
         for i in range(len(fdict)):
             yname = "dat_%04d_%01d.yaml" % (scanno, i)
             write_yaml(fdict[i], outdir+'/'+yname)
-
-
-#def integrate_files(idict, q, radind, outdir):
-#    """Iterate over files in a directory accoording to the peculiar
-#    measurements scheme used in cSAXS.
-#    """
-#    kk = idict.keys()
-#    kk.sort()
-#    indices = radind['indices']
-#    for k in kk:
-#        path = Datadir + '/' + k + '/'
-#        files = glob.glob(path + '*.cbf')
-#        files.sort()
-#        fileoutdir = "%s/%s" % (outdir, k)
-#        print(fileoutdir)
-#        sys.stdout.flush()
-#        try:
-#            os.mkdir(fileoutdir)
-#        except OSError:
-#            pass
-#        for infile in files:
-#            frame = read_cbf(infile)
-#            stats = r.binstats(indices, frame.im, calculate=(1,0,1,1))
-#            outname = re.sub('.*/', '', infile)
-#            outfile = fileoutdir + '/' +  re.sub("\.cbf$", ".dat", outname)
-##            print(outfile)
-##            sys.stdout.flush()
-#            outarr = np.column_stack([q, stats[0], stats[2], stats[3]])
-#            write_dat(outfile, outarr, comment=idict[k][0])
-
