@@ -14,7 +14,7 @@ def read_dat(fname):
     return d
 
 
-def write_dat(fname, arr, comment="", skipz=False):
+def write_dat(arr, fname, comment="", skipz=False):
     """Write a dat-file from a given [n,3] sized array.
 
     comment: Write this string as a first line in the file
