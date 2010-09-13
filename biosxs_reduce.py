@@ -76,6 +76,28 @@ def stack_ydat(stem, poslist, ending=".yaml"):
     return stack
 
 
+def mean_stack(stack):
+    """Return the mean (and error) of a (M, 3, n) stack along 1st dimension.
+    """
+    ish = stack.shape
+    retval = np.zeros((ish[1], ish[2]))
+    retval[0,:] = stack[0,0,:]
+    retval[1,:] = np.mean(stack[:,1,:], axis=0)
+    retval[2,:] = np.sqrt(np.sum(np.square(stack[:,2,:]), axis=0))/ish[0]
+    return retval
+
+
+def sum_stack(stack):
+    """Return the sum (and error) of (M, 3, n) stack along 1st dimension.
+    """
+    ish = stack.shape
+    retval = np.zeros((ish[1], ish[2]))
+    retval[0,:] = stack[0,0,:] # q
+    retval[1,:] = np.sum(stack[:,1,:], axis=0)
+    retval[2,:] = np.sqrt(np.sum(np.square(stack[:,2,:]), axis=0))
+    return retval
+
+
 def chivectors(x, y):
     nn = np.logical_not(np.logical_or(
         np.logical_or(np.isnan(x[1,:]), np.isnan(y[1,:])),
@@ -148,24 +170,6 @@ def filter_stack(stack, fnames, chi2cutoff=1.5):
         diclist.append(ld)
 
     return outarr, diclist
-
-
-def sum_stack(stack):
-    """Return the mean of stack over repetitions.
-
-    Return value is an array with coordinates [posno, q/I/err, data].
-    """
-
-    def sumerr(x):
-        return np.sqrt(np.mean(np.square(x), axis=0))
-
-    ish = stack.shape
-    retval = np.zeros((ish[0], ish[2], ish[3]))
-    for posno in range(ish[0]):
-        retval[posno, 0, :] = stack[posno, 0, 0, :] # q
-        retval[posno, 1, :] = np.mean(stack[posno, :, 1, :], axis=0)
-        retval[posno, 2, :] =  sumerr(stack[posno, :, 2, :])
-    return retval
 
 
 def stack_scan(scanno, spec, q, radind, modulus=10):
