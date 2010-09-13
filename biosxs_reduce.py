@@ -4,7 +4,7 @@ import loopyaml
 import numpy as np
 import radbin as r
 from detformats import read_cbf, read_spec
-from csaxsformats import write_yaml, read_ydat
+from yamlformats import write_yaml, read_ydat
 from scipy.io.matlab import savemat
 
 Datadir = '/afs/psi.ch/project/cxs/users/ikonen/ND-Rhod-2010-04-24/Data10/'
@@ -107,27 +107,29 @@ def chivectors(x, y):
     return chi2
 
 
-def chifilter(stack, posno, cutoff=1.5):
-    """Return an index vector of valid repetition numbers.
+def chifilter(rowstack, cutoff=1.2):
+    """Filter observations by comparing to the first one in stack.
 
-    Repetitions in a positions are compared to the first rep,
-    and if significant chi^2 difference is found, the frames after
-    this difference starts are rejected, i.e. not included in the
-    return list.
+    Returns a tuple (indices, chis). chis are the chi**2 values
+    between the first row in `rowstack` and the rest of the rows (chis[0]
+    is always 0.0). indices is a boolean index array. If row r has
+    chi^2 less than `cutoff`, then indices[r] == True.
+    First row is always included, i.e. indices[0] == True.
+
+    Argument `rowstack` should be an array of shape (M, 3, n), where
+    M is the number of observations (repeats, positions etc.) and
+    n is the number of points in a single observation.
     """
 
-    ish = stack.shape
-    first = stack[posno, 0, :, :]
-    inds = np.zeros((ish[1]), dtype=np.bool)
+    ish = rowstack.shape
+    inds = np.zeros((ish[0]), dtype=np.bool)
     inds[0] = True
-    chis = np.zeros((ish[1]))
-    for repno in range(1, ish[1]):
-        chi2 = chivectors(stack[posno, repno, :, :], first)
+    chis = np.zeros((ish[0]))
+    first = rowstack[0, :, :]
+    for repno in range(1, ish[0]):
+        chi2 = chivectors(rowstack[repno, :, :], first)
         chis[repno] = chi2
-        if chi2 > cutoff:
-            logging.warning("pos: %d, rep: %d, chi2: %g > %g !"
-                % (posno, repno, chi2, cutoff))
-        else:
+        if chi2 < cutoff:
             inds[repno] = True
     return inds, chis
 
@@ -137,26 +139,17 @@ def filter_stack(stack, fnames, chi2cutoff=1.5):
 
     Return value is an array with coordinates [posno, q/I/err, data].
     """
-
-    def sumerr(x):
-        return np.sqrt(np.sum(np.square(x), axis=0))
-
-    def meanerr(x):
-        return np.sqrt(np.sum(np.square(x), axis=0))/x.shape[0]
-
     ish = stack.shape
     outarr = np.zeros((ish[0], ish[2], ish[3]))
     diclist = []
     for posno in range(ish[0]):
         outdic = {"included": [], "discarded": [], "chi2cutoff": chi2cutoff}
-        rinds, chis = chifilter(stack, posno, cutoff=chi2cutoff)
-        outarr[posno, 0, :] = stack[posno, 0, 0, :] # q
-        if len(rinds) > 1:
-            outarr[posno, 1, :] = np.mean(stack[posno, rinds, 1, :], axis=0)
-            outarr[posno, 2, :] = meanerr(stack[posno, rinds, 2, :])
-        else:
-            outarr[posno, 1, :] = stack[posno, rinds, 1, :]
-            outarr[posno, 2, :] = stack[posno, rinds, 2, :]
+        rinds, chis = chifilter(stack[posno, ...], cutoff=chi2cutoff)
+        for repno in range(len(rinds)):
+            if not rinds[repno]:
+                logging.warning("posno: %d, rep: %d, chi2: %g > %g !"
+                    % (posno, repno, chis[repno], chi2cutoff))
+        outarr[posno, :, :] = mean_stack(stack[posno, rinds, :, :])
         incinds = list(np.arange(ish[1])[rinds])
         disinds = list(np.arange(ish[1])[np.logical_not(rinds)])
         outdic['included'] = [ [os.path.basename(fnames[posno][ind][0]),
