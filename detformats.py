@@ -49,7 +49,7 @@ def read_spec(fname):
     """Read a spec scan file to a dictionary."""
     import specparser as sp
     fin = open(fname)
-    p = sp.specparser(fin)
+    p = sp.Specparser(fin)
     d = p.parse()
     fin.close()
     return d
