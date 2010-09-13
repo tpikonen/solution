@@ -5,7 +5,7 @@ import numpy as np
 import radbin as r
 from detformats import read_cbf, read_spec
 #from atsasformats import write_dat
-from csaxsformats import write_yaml
+from csaxsformats import write_yaml, read_ydat
 from scipy.io.matlab import savemat
 
 Datadir = '/afs/psi.ch/project/cxs/users/ikonen/ND-Rhod-2010-04-24/Data10/'
@@ -64,6 +64,17 @@ def md5_file(fname):
         md5.update(f.read())
         h = md5.hexdigest()
     return h
+
+
+def stack_ydat(stem, poslist, ending=".yaml"):
+    """Return a stack of ydat-files in poslist starting with `stem`.
+    """
+    ll = []
+    for p in poslist:
+        fname = "%s%d%s" % (stem, p, ending)
+        ll.append(read_ydat(fname).T)
+    stack = np.dstack(ll).transpose((2,0,1))
+    return stack
 
 
 def chivectors(x, y):
