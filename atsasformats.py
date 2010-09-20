@@ -11,7 +11,7 @@ def read_dat(fname):
     out = StringIO.StringIO(ss)
     d = np.loadtxt(out)
     out.close()
-    return d
+    return d.T
 
 
 def write_dat(arr, fname, comment="", skipz=False):
