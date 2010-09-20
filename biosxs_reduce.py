@@ -84,7 +84,7 @@ def stack_ydat(stem, poslist, ending=".yaml"):
     ll = []
     for p in poslist:
         fname = "%s%d%s" % (stem, p, ending)
-        ll.append(read_ydat(fname).T)
+        ll.append(read_ydat(fname))
     stack = np.dstack(ll).transpose((2,0,1))
     return stack
 
