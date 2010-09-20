@@ -65,6 +65,19 @@ def md5_file(fname):
     return h
 
 
+def errsubtract(a, b):
+    """Return a - b with errors, where a and b are (3, N) arrays.
+
+    Input values should have the same q-scale (this is not checked).
+    """
+    nn = clean_indices(a, b)
+    retval = np.zeros_like(a)
+    retval[0,:] = a[0,:]
+    retval[1,nn] = a[1,nn] - b[1,nn]
+    retval[2,nn] = np.sqrt(np.square(a[2,nn]) + np.square(b[2,nn]))
+    return retval
+
+
 def stack_ydat(stem, poslist, ending=".yaml"):
     """Return a stack of ydat-files in poslist starting with `stem`.
     """
