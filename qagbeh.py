@@ -2,7 +2,7 @@ import sys, os.path, glob
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
-import csaxsformats, detformats, loopyaml
+import detformats, csaxsformats, yamlformats, loopyaml
 import radbin as r
 import modelfit as mf
 from centerfits import fwhm
@@ -151,7 +151,7 @@ def main():
 
     q = qagbeh(Iagbeh)
     lq = loopyaml.Loopdict({'q': map(float, list(q))}, ['q'])
-    csaxsformats.write_yaml(lq, opts.outfile)
+    yamlformats.write_yaml(lq, opts.outfile)
 
 if __name__ == "__main__":
     main()
