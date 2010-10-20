@@ -3,6 +3,7 @@ import numpy as np
 import numpy.ma as ma
 import matplotlib.mlab as mlab
 import scipy.optimize as optim
+import scipy.interpolate as ip
 import matplotlib.pyplot as plt
 import radbin as c
 from sxsplots import logshow
@@ -111,6 +112,34 @@ def plotend(startcen, optcen, plotit=True):
 #        plt.waitforbuttonpress()
         plt.hold(0)
 
+
+def get_min_gradient(image, cen, mask=None, start_exc=25):
+    """Return the radial coordinate with the largest negative gradient.
+
+    Needed for center refinement with sector or ring methods.
+
+    Arguments:
+        `image`: Image to use.
+        `cen`: Tuple with the center coordinates.
+        `mask`: Mask giving the pixels to be used in determination.
+        `start_exc`: Number of points to exclude from the start (center) of the
+            image radial gradient array
+    """
+    [I, n1] = c.radbin(image, cen, mask=mask)
+    r = np.arange(len(I))
+    yerr = np.sqrt(I)
+    nzerr = yerr.copy()
+    zrepl = np.abs(np.median(yerr))
+    if zrepl == 0.0:
+        zrepl = 1.0 # give up
+    nzerr[nzerr <= 0.0] = zrepl
+    sp = ip.UnivariateSpline(r, I, w=1/nzerr)
+#    smoo = [ sp.derivatives(x)[0] for x in r ]
+    grad = [ sp.derivatives(x)[1] for x in r ]
+    gradmin = np.argmin(grad[start_exc:]) + start_exc
+#    plt.plot(r, smoo, r, I, r, grad)
+#    print("Min gradient: %d" % gradmin)
+    return gradmin
 
 # Fitting functions
 
@@ -269,15 +298,25 @@ def centerfit_peakwidth(image, startcen=None, peakrange=None, baseline=None, mas
     return optcen
 
 
-def centerfit_ringvariance(image, startcen=None, ringradius=100, ringwidth=2,
+def centerfit_ringvariance(image, startcen=None, ringradius=None, ringwidth=2,
                            mask=None, plotit=False):
     """Return symmetry center of an image by minimizing variance on a ring.
 
-    If `startcen` is not given, gets an initial guess from the maximum
-    intensity and refines it.
+    Keyword arguments:
+        `startcen`: Initial guess for the center. If not given, uses the
+            position with the largest value.
+        `ringradius`: Radial coordinate of the ring where optimization
+            is performed. If not given, uses the value with the largest
+            negative radial gradient, determined by using `startcen`
+            as a center.
+        `ringwidth`: Width of the ring used in optimization.
+        `mask`: Mask giving the pixels to be used in determination.
+        `plotit`: If true, plot images showing initial and final coordinates.
     """
-    if startcen == None:
+    if startcen is None:
         startcen = get_im_max(image)
+    if ringradius is None:
+        ringradius = get_min_gradient(image, startcen, mask)
 
     plotstart(image, startcen, mask, plotit)
 
@@ -295,18 +334,30 @@ def centerfit_ringvariance(image, startcen=None, ringradius=100, ringwidth=2,
     plotend(startcen, optcen, plotit)
     return optcen
 
-def centerfit_sectors(image, startcen=None, ringstart=120, ringend=220, secwidth=10.0, mask=None, plotit=False):
+def centerfit_sectors(image, startcen=None, rlimits=None, secwidth=10.0, mask=None, plotit=False):
     """Return beam center from an image with (approximate) cylindrical symmetry.
 
     The beam center must be inside the image coordinates, not outside the frame.
-    If `startcen` is not given, gets an initial guess from the maximum
-    intensity and refines it.
-    """
-    if startcen == None:
-        startcen = get_im_max(image)
 
-    rstart = ringstart
-    rstop = ringend
+    Keyword arguments:
+        `startcen`: Initial guess for the center. If not given, uses the
+            position with the largest value.
+        `rlimits`: Tuple giving the radial limits of the sector which is fitted.
+            If not given, uses the value with the largest negative radial
+            gradient, determined by using `startcen` as a center.
+        `secwidth`: Width of the sector to be optimized in degrees.
+        `mask`: Mask giving the pixels to be used in determination.
+        `plotit`: If true, plot images showing initial and final coordinates.
+    """
+    if startcen is None:
+        startcen = get_im_max(image)
+    if rlimits is None:
+#        rlimits = (120, 220)
+        gmin = get_min_gradient(image, startcen, mask)
+        rlimits = (gmin, gmin+100)
+
+    rstart = rlimits[0]
+    rstop = rlimits[1]
     hwidth = secwidth * (np.pi/180) # width in rads
 
     plotstart(image, startcen, mask, plotit)
