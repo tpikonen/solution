@@ -189,7 +189,7 @@ def centerfit_1dsymmetry(image, minlen=100, cen_exc=15, mask=None, plotit=False)
     return symcen1d(ymean, **kwas), symcen1d(xmean, **kwas)
 
 
-def centerfit_peak(image, startcen=None, peakrange=None, baseline=None, mask=None, plotit=False):
+def centerfit_peakwidth(image, startcen=None, peakrange=None, baseline=None, mask=None, plotit=False):
     """Return center from an image with a ring.
 
     Minimizes the width of the peak obtained from radial averaging
