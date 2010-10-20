@@ -201,7 +201,7 @@ def centerfit_peak(image, startcen=None, peakrange=None, baseline=None, mask=Non
     if startcen is None:
         startcen = get_im_max(image)
 
-    [r1, n1] = c.radbin(image, startcen[0], startcen[1], peakrange, mask=mask)
+    [r1, n1] = c.radbin(image, startcen, peakrange, mask=mask)
     if baseline == None:
         baseline = r1.min()
     x = np.arange(peakrange.size - 1)
@@ -214,7 +214,7 @@ def centerfit_peak(image, startcen=None, peakrange=None, baseline=None, mask=Non
 
     def ofun_ring(cen):
         """Return width of a Debye ring with the given center"""
-        [r, n] = c.radbin(image, cen[0], cen[1], peakrange, mask=mask)
+        [r, n] = c.radbin(image, cen, peakrange, mask=mask)
         w = fwhm(x, r)
         # 2nd moment is not very stable
 #        w = secondmoment(x, r)
@@ -225,7 +225,7 @@ def centerfit_peak(image, startcen=None, peakrange=None, baseline=None, mask=Non
     def ofun_cylsymm(cen):
         """Calculate STD from counts in a (narrow) ring in the image"""
         R = 100
-        [r, n] = c.radbin(image, cen[0], cen[1], radrange=np.array([R,R+2]), phirange=np.linspace(0, 2*np.pi, np.floor(2*np.pi*R)), mask=mask)
+        [r, n] = c.radbin(image, cen, radrange=np.array([R,R+2]), phirange=np.linspace(0, 2*np.pi, np.floor(2*np.pi*R)), mask=mask)
         r = r[r != 0]
         w = np.std(r)
 #        plt.hold(0)
@@ -244,7 +244,7 @@ def centerfit_peak(image, startcen=None, peakrange=None, baseline=None, mask=Non
         hwidth = 10 * (np.pi/180) # width in rads
         sect_cens = [0, 0.5*np.pi, np.pi, 1.5*np.pi]
         seclims = [ np.array([a - hwidth, a + hwidth])+np.pi/4.0 for a in sect_cens ]
-        rints = [ c.radbin(image, cen[0], cen[1], radrange=np.linspace(rstart,rstop), phirange=x, mask=mask)[0] for x in seclims ]
+        rints = [ c.radbin(image, cen, radrange=np.linspace(rstart,rstop), phirange=x, mask=mask)[0] for x in seclims ]
         chi2_1 = chivectors(rints[0], rints[2])
         chi2_2 = chivectors(rints[1], rints[3])
 
@@ -262,7 +262,7 @@ def centerfit_peak(image, startcen=None, peakrange=None, baseline=None, mask=Non
 
 
     optcen = optim.fmin(ofun_sectors, startcen, disp=True)
-    [r2, n2] = c.radbin(image, optcen[0], optcen[1], peakrange, mask=mask)
+    [r2, n2] = c.radbin(image, optcen, peakrange, mask=mask)
     if(plotit):
         plt.plot(x, r1, x, r2)
         plt.show()
@@ -283,7 +283,7 @@ def centerfit_ringvariance(image, startcen=None, ringradius=100, ringwidth=2,
 
     def ofun_ringvariance(cen):
         """Calculate STD from counts in a (narrow) ring in the image"""
-        [r, n] = c.radbin(image, cen[0], cen[1], \
+        [r, n] = c.radbin(image, cen, \
                     radrange=np.array([ringradius, ringradius+ringwidth]), \
                     phirange=np.linspace(0, 2*np.pi, \
                     np.floor(2*np.pi*ringradius)), mask=mask)
@@ -315,7 +315,7 @@ def centerfit_sectors(image, startcen=None, ringstart=120, ringend=220, secwidth
         """Calculate two chi2s from two opposing sectors and multiply"""
         sect_cens = [0, 0.5*np.pi, np.pi, 1.5*np.pi]
         seclims = [ np.array([a - hwidth, a + hwidth])+np.pi/4.0 for a in sect_cens ]
-        rints = [ c.radbin(image, cen[0], cen[1], radrange=np.linspace(rstart,rstop), phirange=x, mask=mask)[0] for x in seclims ]
+        rints = [ c.radbin(image, cen, radrange=np.linspace(rstart,rstop), phirange=x, mask=mask)[0] for x in seclims ]
         chi2_1 = chivectors(rints[0], rints[2])
         chi2_2 = chivectors(rints[1], rints[3])
         return chi2_1*chi2_2
