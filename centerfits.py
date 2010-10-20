@@ -5,7 +5,7 @@ import matplotlib.mlab as mlab
 import scipy.optimize as optim
 import matplotlib.pyplot as plt
 import radbin as c
-from sastuff import logshow
+from sxsplots import logshow
 from detformats import read_cbf, read_mask
 from optparse import OptionParser
 
