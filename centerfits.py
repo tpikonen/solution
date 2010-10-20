@@ -23,7 +23,12 @@ def get_im_max(image):
 
 
 def chivectors(x, y):
-    return ma.sum((x - y)**2) / ma.sum(x**2 + y**2)
+    nn = np.logical_not(np.logical_or(
+        np.logical_or(np.isnan(x), np.isnan(y)),
+        np.logical_or((x <= 0.0), (y <= 0.0))))
+    N = np.sum(nn)
+    chisq = (1.0/N) * ma.sum((x[nn] - y[nn])**2 / (x[nn]**2 + y[nn]**2))
+    return chisq
 
 
 def fwhm(x, y):
