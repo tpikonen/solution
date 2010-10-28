@@ -54,7 +54,7 @@ def read_experiment_conf(fname):
 def get_framefilename(scanno, pointno, burstno):
     """Return the filename of a frame at a given scan, point, and burst number.
     """
-    fname = "%s/S%05d/e%05d_%d_%05d_%05d_%05d.cbf" % (Pilatusdir, scanno, Expno, Detno, scanno, pointno, burstno)
+    fname = "%s/S%05d/e%05d_%d_%05d_%05d_%05d.%s" % (Pilatusdir, scanno, Expno, Detno, scanno, pointno, burstno, Cbfext)
     return fname
 
 
