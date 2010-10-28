@@ -250,16 +250,19 @@ def stack_scan(scanno, spec, q, radind, modulus=10):
     return stack, fnames
 
 
-def stack_files(idict, spec, q, radind, outdir):
-    """Create stacks from scans in `idict` and write the to files.
+def stack_files(scanfile, conffile, outdir):
+    """Create stacks from scans read from `scanfile` and write the to files.
     """
-    scanstrs = idict.keys()
-    scanstrs.sort()
-    scannos = map(int, scanstrs) # just a check before looping over everything
-    for ss in scanstrs:
-        scanno = int(ss)
-        outname = "stack_" + ss
-        stack, fnames = stack_scan(scanno, spec, q, radind)
+    scans = read_yaml(scanfile)
+    read_experiment_conf(conffile)
+    spec = read_spec(Specfile)
+    radind = read_pickle(Indfile)
+    q = radind['q']
+    scannos = scans.keys()
+    scannos.sort()
+    for scanno in scannos:
+        outname = "stack_%03d" % scanno
+        stack, fnames = stack_scan(scanno, spec, q, radind, modulus=10)
         savemat(outdir+'/'+outname + ".mat", {outname: stack}, do_compression=1)
         fstack, fdict = filter_stack(stack, fnames, chi2cutoff=1.2)
         for i in range(len(fdict)):
