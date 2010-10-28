@@ -4,15 +4,44 @@ import loopyaml
 import numpy as np
 import radbin as r
 from detformats import read_cbf, read_spec
-from yamlformats import write_yaml, read_ydat
-from scipy.io.matlab import savemat
+from yamlformats import read_yaml, write_yaml, read_ydat, write_ydat
+from csaxsformats import read_pickle
+from atsasformats import read_dat
+from scipy.io.matlab import savemat, loadmat
 
-Datadir = '/afs/psi.ch/project/cxs/users/ikonen/ND-Rhod-2010-04-24/Data10/'
-Pilatusdir = Datadir + 'pilatus/S00000-00999/'
-Expno = 12594
-Detno = 1
-Specfile = Datadir + 'spec/dat-files/specES1_started_2010_05_22_1133.dat'
+#Basedir = '/afs/psi.ch/project/cxs/users/ikonen/ND-Rhod-2010-04-24/Data10/'
+#Pilatusdir = Basedir + 'pilatus/S00000-00999/'
+#Expno = 12594
+#Detno = 1
+#Specfile = Basedir + 'spec/dat-files/specES1_started_2010_05_22_1133.dat'
 
+Basedir = None
+Pilatusdir = None
+Expno = None
+Detno = None
+Cbfext = None
+Specfile = None
+Indfile = None
+
+def read_experiment_conf(fname):
+    """Set global variables from conffile.
+    """
+    global Basedir
+    global Pilatusdir
+    global Expno
+    global Detno
+    global Cbfext
+    global Specfile
+    global Indfile
+
+    yd = read_yaml(fname)
+    Basedir = yd['basedir']
+    Pilatusdir = Basedir + yd['pilatusdir']
+    Expno = int(yd['expno'])
+    Detno = int(yd['detno'])
+    Cbfext = yd['cbfext']
+    Specfile = Basedir + yd['specfile']
+    Indfile = Basedir + yd['indfile']
 
 #def read_frame(scanno, pointno, burstno):
 #    """Return a frame from a given scan and point.
