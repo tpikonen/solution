@@ -14,8 +14,11 @@ def read_dat(fname):
     return d.T
 
 
-def write_dat(arr, fname, comment="", skipz=False):
+def write_dat(arr, ff, comment="", skipz=False):
     """Write a dat-file from a given [n,3] sized array `arr`.
+
+    Argument `ff` can be either a string, in which case it's interpreted
+    as a filename, or an object (such as an open file) with a write method.
 
     comment: Write this string as a first line in the file.
     skipz: Skip data points i where arr[i,1] <= 0.
@@ -23,16 +26,25 @@ def write_dat(arr, fname, comment="", skipz=False):
     If the second dimension of `arr` is much (10x) larger than first,
     the array is transposed before writing.
     """
-    ish = arr.shape
-    if (ish[1] > 3 and ish[0] <= 3) or ish[1]/ish[0] > 10:
-        arr = arr.T
-    with open(fname, "w") as fp:
+    def write_dat_fp(arr, fp):
         fp.write(comment + "\n")
+        # write a 3-line header to keep primus happy
+        fp.write("#\n")
+        fp.write("#\n")
         for i in range(arr.shape[0]):
             if not skipz or arr[i,1] > 0:
                 for j in range(arr.shape[1]):
                     fp.write("  %12E" % arr[i,j])
                 fp.write("\n")
+
+    ish = arr.shape
+    if (ish[1] > 3 and ish[0] <= 3) or ish[1]/ish[0] > 10:
+        arr = arr.transpose()
+    if hasattr(ff, 'write'):
+        write_dat_fp(arr, ff)
+    else:
+        with open(ff, "w") as fp:
+            write_dat_fp(arr, fp)
 
 
 def read_gnom(fname):
