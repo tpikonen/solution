@@ -48,3 +48,28 @@ def write_ydat(arr, fname, cols=['q', 'I', 'Ierr'], addict={}):
         outdic[cols[i]] = map(float, list(arr[i, :]))
     ld = loopyaml.Loopdict(outdic, loopvars=cols[:arr.shape[0]])
     write_yaml(ld, fname)
+
+
+def write_ystack(stack, fname, addict={}):
+    """Write a rank-3 array `stack` to YAML-dat file `fname`.
+
+    The shape of `stack` should be (reps, q/I/Ierr, val).
+
+    Keyword argument `addict` can contain an additional dictionary which is
+        added to the output yaml dictionary.
+    """
+    if (stack[:,0,:] - stack[0,0,:]).any():
+        raise ValueError("q-scales must be identical.")
+    outdic = addict
+    outdic['q'] = map(float, list(stack[0,0,:]))
+    cols = ['q']
+    for i in range(stack.shape[0]):
+        Ikey = 'I_%d' % i
+        Ierrkey = 'Ierr_%d' % i
+        outdic[Ikey] = map(float, list(stack[i, 1, :]))
+        cols.append(Ikey)
+        outdic[Ierrkey] = map(float, list(stack[i, 2, :]))
+        cols.append(Ierrkey)
+    print(cols)
+    ld = loopyaml.Loopdict(outdic, loopvars=cols)
+    write_yaml(ld, fname)
