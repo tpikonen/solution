@@ -28,7 +28,7 @@ def read_ydat(fname):
     return yarr.squeeze()
 
 
-def write_ydat(arr, fname, cols=['q', 'I', 'Ierr'], addict=None):
+def write_ydat(arr, fname, cols=['q', 'I', 'Ierr'], addict={}):
     """Write a rank-2 array `arr` to YAML-dat file `fname`.
 
     The first index of the array is assumed to be columns and the second rows,
@@ -43,10 +43,7 @@ def write_ydat(arr, fname, cols=['q', 'I', 'Ierr'], addict=None):
         arr = arr.T
     if arr.shape[0] > len(cols):
         raise ValueError("Not enough column names given")
-    if addict is None:
-        outdic = {}
-    else:
-        outdic = addict
+    outdic = addict
     for i in range(arr.shape[0]):
         outdic[cols[i]] = map(float, list(arr[i, :]))
     ld = loopyaml.Loopdict(outdic, loopvars=cols[:arr.shape[0]])
