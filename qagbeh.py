@@ -115,12 +115,6 @@ def qagbeh(Iagbeh, first_index=None, wavel=0.1, Dlatt=5.8380, peaks=None):
     return q
 
 
-def fail(oprs, msg):
-    print >> sys.stderr, oprs.format_help()
-    print >> sys.stderr, msg
-    sys.exit(1)
-
-
 def main():
     framefile_ext = 'cbf'
     oprs = OptionParser(usage=usage, description=description)
@@ -136,15 +130,15 @@ def main():
         fname = args[0]
 #    elif(len(args) == 1 and os.path.isdir(args[0])):
     else:
-        fail(oprs, "One input file required.")
+        oprs.error("One input file required.")
 
     if opts.binfile:
         radind = csaxsformats.read_pickle(opts.binfile)
     else:
-        fail(oprs, "Binfile name is missing.")
+        oprs.error("Binfile name is missing.")
 
     if not "indices" in radind:
-        fail(oprs, "Binfile is missing 'indices' key.")
+        oprs.error("Binfile is missing 'indices' key.")
 
     frame = detformats.read_cbf(fname)
     Iagbeh = r.binstats(radind['indices'], frame.im)[0] # Get the mean
