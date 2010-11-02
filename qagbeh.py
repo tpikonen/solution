@@ -5,6 +5,7 @@ import matplotlib.mlab as mlab
 import detformats, csaxsformats, yamlformats, loopyaml
 import radbin as r
 import modelfit as mf
+from scipy.signal import medfilt
 from centerfits import fwhm
 from optparse import OptionParser
 
@@ -16,9 +17,9 @@ usage="%prog -b <radindfile.pickle> [-o <outputfile.yaml>] file.cbf"
 def get_firstpeak(Iagbeh):
     """Return an estimate for the first peak position in AgBeh scattering.
     """
-    #FIXME: Smooth the curve before differentiating (Maybe with smoothing
-    # routine from Chris?).
-    dlog = np.diff(np.log(Iagbeh))
+    #FIXME: Test with noisy data and check for smoothing algorithm other
+    # than medfilt (Maybe with smoothing routine from Chris?).
+    dlog = np.diff(medfilt(np.log(Iagbeh), kernel_size=5))
     highs = 1.0*(dlog > 0.5*np.nanmax(dlog))
     peaks = mlab.find(np.diff(highs) < -0.5)
     return peaks[0]
