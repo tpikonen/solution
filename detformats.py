@@ -173,6 +173,16 @@ def write_pnglog(a, fname):
     fp.close()
 
 
+def read_eiger(fname):
+    """Read the HDF5 output of the Eiger prototype module at cSAXS.
+    """
+    import h5py
+    f = h5py.File(fname, "r")
+    d = det_struct()
+    d.im = np.array(f['eh5']['images']).squeeze()
+    return d
+
+
 def read_cbf(filename, have_cbflib=1):
     """Read CBF output from the Pilatus detector at cSAXS.
     """
