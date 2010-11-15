@@ -10,10 +10,16 @@ def read_yaml(fname):
     return d
 
 
-def write_yaml(o, fname, **kwargs):
-    """Write a given object to a YAML file fname."""
-    with open(fname, 'w') as f:
-        loopyaml.dump(o, f, **kwargs)
+def write_yaml(o, ff, **kwargs):
+    """Write a given object to a YAML file 'ff'.
+
+    `ff` can be either a file name or a stream.
+    """
+    if hasattr(ff, 'write'):
+        loopyaml.dump(o, ff, **kwargs)
+    else:
+        with open(ff, "w") as fp:
+            loopyaml.dump(o, fp, **kwargs)
 
 
 def read_ydat(fname):
@@ -28,8 +34,10 @@ def read_ydat(fname):
     return yarr.squeeze()
 
 
-def write_ydat(arr, fname, cols=['q', 'I', 'Ierr'], addict={}):
-    """Write a rank-2 array `arr` to YAML-dat file `fname`.
+def write_ydat(arr, ff, cols=['q', 'I', 'Ierr'], addict={}):
+    """Write a rank-2 array `arr` to YAML-dat file `ff`.
+
+    `ff` can be a file name or a stream.
 
     The first index of the array is assumed to be columns and the second rows,
     but if there are more than 3 columns and 3 or less rows, the array is
@@ -39,15 +47,22 @@ def write_ydat(arr, fname, cols=['q', 'I', 'Ierr'], addict={}):
     Keyword argument `addict` can contain an additional dictionary which is
         added to the output yaml dictionary.
     """
-    if arr.shape[0] != len(cols) and arr.shape[0] > 3 and arr.shape[1] <= 3:
-        arr = arr.T
-    if arr.shape[0] > len(cols):
-        raise ValueError("Not enough column names given")
-    outdic = addict
-    for i in range(arr.shape[0]):
-        outdic[cols[i]] = map(float, list(arr[i, :]))
-    ld = loopyaml.Loopdict(outdic, loopvars=cols[:arr.shape[0]])
-    write_yaml(ld, fname)
+    def write_ydat_fp(fp, arr, cols, addict):
+        if arr.shape[0] != len(cols) and arr.shape[0] > 3 and arr.shape[1] <= 3:
+            arr = arr.T
+        if arr.shape[0] > len(cols):
+            raise ValueError("Not enough column names given")
+        outdic = addict
+        for i in range(arr.shape[0]):
+            outdic[cols[i]] = map(float, list(arr[i, :]))
+        ld = loopyaml.Loopdict(outdic, loopvars=cols[:arr.shape[0]])
+        write_yaml(ld, fp)
+
+    if hasattr(ff, 'write'):
+        write_ydat_fp(ff, arr, cols, addict)
+    else:
+        with open(ff, "w") as fp:
+            write_ydat_fp(fp, arr, cols, addict)
 
 
 def write_ystack(stack, fname, addict={}):
