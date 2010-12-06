@@ -208,7 +208,7 @@ def find_bad_pixels(files, hot_threshold=np.inf, var_factor=5.0, chipgaps=False)
         Asum += tim
         Asumsq += tim**2.0
         a_hots = bool_add(a_hots, (tim > hot_threshold))
-        mfilt = scipy.signal.medfilt2d(tim, kernel_size=3)
+        mfilt = scipy.signal.medfilt2d(tim, kernel_size=5)
         # Pixels where curvature is less than threshold
         lapm = (np.abs(scipy.signal.convolve2d(mfilt, laplace, mode='same',
             boundary='symm', old_behavior=0)) < laplace_threshold)
