@@ -98,7 +98,7 @@ def get_scanlen(spec, scanno):
     """
     scan = spec['scans'][scanno-1]
     assert(scanno == scan['number'])
-    return len(scan['points'])
+    return scan['npoints']
 
 
 def md5_file(fname):
