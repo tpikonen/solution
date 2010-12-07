@@ -24,7 +24,7 @@ Specfile = None
 Indfile = None
 
 def read_experiment_conf(fname):
-    """Set global variables from conffile.
+    """Set global variables from conffile, also return them in a dict.
     """
     global Basedir
     global Pilatusdir
@@ -34,14 +34,16 @@ def read_experiment_conf(fname):
     global Specfile
     global Indfile
 
-    yd = read_yaml(fname)
-    Basedir = yd['basedir']
-    Pilatusdir = Basedir + yd['pilatusdir']
-    Expno = int(yd['expno'])
-    Detno = int(yd['detno'])
-    Cbfext = yd['cbfext']
-    Specfile = Basedir + yd['specfile']
-    Indfile = Basedir + yd['indfile']
+    c = read_experiment_dict(fname)
+
+    Basedir = c['Basedir']
+    Pilatusdir = c['Pilatusdir']
+    Expno = c['Expno']
+    Detno = c['Detno']
+    Cbfext = c['Cbfext']
+    Specfile = c['Specfile']
+    Indfile = c['Indfile']
+    return c
 
 
 def read_experiment_dict(fname):
