@@ -79,24 +79,24 @@ def get_binned(indices, framefile):
     return (stats[0], stats[3]) # Mean and Poisson count std of mean
 
 
-def get_diode(spec, scanno, pointno):
+def get_diode(specscans, scanno, pointno):
     """Return diode counts from a given scan and point.
 
-    Argument `spec` is the dict returned from Specparser.parse().
+    Argument `specscans` is the list returned from Specparser.parse()['scans'].
     Scan number `scanno` is indexed starting from 1, as in SPEC.
     """
-    scan = spec['scans'][scanno-1]
+    scan = specscans[scanno-1]
     assert(scanno == scan['number'])
     diodeval = scan['counters']['diode'][pointno]
     return diodeval
 
 
-def get_scanlen(spec, scanno):
+def get_scanlen(specscans, scanno):
     """Return the number of points in `scanno`.
 
     Scan number `scanno` is indexed starting from 1, as in SPEC.
     """
-    scan = spec['scans'][scanno-1]
+    scan = specscans[scanno-1]
     assert(scanno == scan['number'])
     return scan['npoints']
 
