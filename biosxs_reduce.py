@@ -43,6 +43,21 @@ def read_experiment_conf(fname):
     Specfile = Basedir + yd['specfile']
     Indfile = Basedir + yd['indfile']
 
+
+def read_experiment_dict(fname):
+    """Return a dictionary with values read from conffile.
+    """
+    yd = read_yaml(fname)
+    c = {}
+    c['Basedir'] = yd['basedir']
+    c['Pilatusdir'] = c['Basedir'] + yd['pilatusdir']
+    c['Expno'] = int(yd['expno'])
+    c['Detno'] = int(yd['detno'])
+    c['Cbfext'] = yd['cbfext']
+    c['Specfile'] = c['Basedir'] + yd['specfile']
+    c['Indfile'] = c['Basedir'] + yd['indfile']
+    return c
+
 #def read_frame(scanno, pointno, burstno):
 #    """Return a frame from a given scan and point.
 #    """
