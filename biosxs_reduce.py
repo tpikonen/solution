@@ -224,7 +224,7 @@ def filter_stack(stack, fnames, chi2cutoff=1.5):
     return outarr, diclist
 
 
-def stack_scan(scanno, spec, q, radind, modulus=10):
+def stack_scan(scanno, specscans, q, radind, modulus=10):
     """Return an array with 1D curves in different positions in a scan.
 
     Argument `modulus` gives the number of unique positions in a scan.
@@ -232,7 +232,7 @@ def stack_scan(scanno, spec, q, radind, modulus=10):
     Return value is an array with coordinates [posno, repno, q/I/err, data]
     and shape (number_of_positions, number_of_repetitions, 3, len(q)).
     """
-    scanlen = get_scanlen(spec, scanno)
+    scanlen = get_scanlen(specscans, scanno)
     if (scanlen % modulus) != 0:
         raise ValueError\
             ("Number of points in a scan is not divisible by modulus.")
@@ -247,7 +247,7 @@ def stack_scan(scanno, spec, q, radind, modulus=10):
         repno = 0
         for pointno in range(posno, scanlen, modulus):
             # Normalize transmission to a reasonable value
-            dval = get_diode(spec, scanno, pointno) / 10000.0
+            dval = get_diode(specscans, scanno, pointno) / 10000.0
             frname = get_framefilename(scanno, pointno, 0)
             (I, err) = get_binned(radind['indices'], frname)
             stack[posno, repno, 0, :] = q
@@ -265,14 +265,15 @@ def stack_files(scanfile, conffile, outdir):
     """
     scans = read_yaml(scanfile)
     read_experiment_conf(conffile)
-    spec = read_spec(Specfile)
+    _spec = read_spec(Specfile)
+    specscans = spec['scans']
     radind = read_pickle(Indfile)
     q = radind['q']
     scannos = scans.keys()
     scannos.sort()
     for scanno in scannos:
         outname = "stack_%03d" % scanno
-        stack, fnames = stack_scan(scanno, spec, q, radind, modulus=10)
+        stack, fnames = stack_scan(scanno, specscans, q, radind, modulus=10)
         savemat(outdir+'/'+outname + ".mat", {outname: stack}, do_compression=1)
         fstack, fdict = filter_stack(stack, fnames, chi2cutoff=1.2)
         for i in range(len(fdict)):
