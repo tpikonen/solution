@@ -60,13 +60,6 @@ def read_experiment_dict(fname):
     c['Indfile'] = c['Basedir'] + yd['indfile']
     return c
 
-#def read_frame(scanno, pointno, burstno):
-#    """Return a frame from a given scan and point.
-#    """
-#    fname = get_framefilename(scanno, pointno, burstno)
-#    frame = read_cbf(fname)
-#    return frame
-
 
 def get_framefilename(scanno, pointno, burstno):
     """Return the filename of a frame at a given scan, point, and burst number.
