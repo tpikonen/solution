@@ -61,10 +61,11 @@ def read_experiment_dict(fname):
     return c
 
 
-def get_framefilename(scanno, pointno, burstno):
+def get_framefilename(conf, scanno, pointno, burstno):
     """Return the filename of a frame at a given scan, point, and burst number.
     """
-    fname = "%s/S%05d/e%05d_%d_%05d_%05d_%05d.%s" % (Pilatusdir, scanno, Expno, Detno, scanno, pointno, burstno, Cbfext)
+    c = conf
+    fname = "%s/S%05d/e%05d_%d_%05d_%05d_%05d.%s" % (c['Pilatusdir'], scanno, c['Expno'], c['Detno'], scanno, pointno, burstno, c['Cbfext'])
     return fname
 
 
@@ -224,7 +225,7 @@ def filter_stack(stack, fnames, chi2cutoff=1.5):
     return outarr, diclist
 
 
-def stack_scan(scanno, specscans, q, radind, modulus=10):
+def stack_scan(conf, scanno, specscans, radind, modulus=10):
     """Return an array with 1D curves in different positions in a scan.
 
     Argument `modulus` gives the number of unique positions in a scan.
@@ -232,6 +233,7 @@ def stack_scan(scanno, specscans, q, radind, modulus=10):
     Return value is an array with coordinates [posno, repno, q/I/err, data]
     and shape (number_of_positions, number_of_repetitions, 3, len(q)).
     """
+    q = radind['q']
     scanlen = get_scanlen(specscans, scanno)
     if (scanlen % modulus) != 0:
         raise ValueError\
@@ -248,7 +250,7 @@ def stack_scan(scanno, specscans, q, radind, modulus=10):
         for pointno in range(posno, scanlen, modulus):
             # Normalize transmission to a reasonable value
             dval = get_diode(specscans, scanno, pointno) / 10000.0
-            frname = get_framefilename(scanno, pointno, 0)
+            frname = get_framefilename(conf, scanno, pointno, 0)
             (I, err) = get_binned(radind['indices'], frname)
             stack[posno, repno, 0, :] = q
             stack[posno, repno, 1, :] = I/dval
@@ -264,7 +266,7 @@ def stack_files(scanfile, conffile, outdir):
     """Create stacks from scans read from `scanfile` and write the to files.
     """
     scans = read_yaml(scanfile)
-    read_experiment_conf(conffile)
+    conf = read_experiment_conf(conffile)
     _spec = read_spec(Specfile)
     specscans = spec['scans']
     radind = read_pickle(Indfile)
@@ -273,7 +275,7 @@ def stack_files(scanfile, conffile, outdir):
     scannos.sort()
     for scanno in scannos:
         outname = "stack_%03d" % scanno
-        stack, fnames = stack_scan(scanno, specscans, q, radind, modulus=10)
+        stack, fnames = stack_scan(conf, scanno, specscans, radind, modulus=10)
         savemat(outdir+'/'+outname + ".mat", {outname: stack}, do_compression=1)
         fstack, fdict = filter_stack(stack, fnames, chi2cutoff=1.2)
         for i in range(len(fdict)):
