@@ -46,7 +46,7 @@ def logshow(arr):
     # Works with ID02 data
 #    plt.imshow(np.log(np.abs(arr)+arr.max()*1e-4), interpolation='nearest')
     # Works with cSAXS data
-    plt.imshow(np.log(np.abs(arr)+1), interpolation='nearest')
+    plt.imshow(np.log10(np.abs(arr)+1), interpolation='nearest')
 
 
 def spsmooth(x, y, yerr):
@@ -72,13 +72,14 @@ def plot_pr(ax, g):
     ax.hold(savehold)
 
 
-def plot_iq(ax, dat, label=None, err=1, smerr=0):
+def plot_iq(ax, dat, err=1, smerr=0, **kwargs):
     """Plot array `dat` to axis `ax`.
 
     Keyword arguments:
-        label:  Label for this curve.
         err:    If True, plot errors from the third column from `dat`.
         smerr:  If True, smooth the error with a spline interpolation.
+
+    The standard matplotlib plot keyword args are also accepted.
     """
     inds = np.isnan(dat[:,1]) == False
     x = dat[inds,0]
@@ -88,7 +89,7 @@ def plot_iq(ax, dat, label=None, err=1, smerr=0):
     y[y == 0.0] = okmin
     savehold = ax.ishold()
     ax.hold(1)
-    ax.semilogy(x, np.abs(y), '-', label=label)
+    ax.semilogy(x, np.abs(y), '-', **kwargs)
     ax.semilogy(x[markind], np.abs(y[markind]), 'o')
     if(err and dat.shape[1] > 2):
         yerr = np.abs(dat[inds,2])
@@ -102,6 +103,6 @@ def plot_iq(ax, dat, label=None, err=1, smerr=0):
         ax.fill_between(x, minerr, maxerr, alpha=0.1, linewidth=0)
     ax.set_xlabel("q / (1/nm)")
     ax.set_ylabel("I(q)")
-    if label is not None:
+    if kwargs.has_key('label'):
         ax.legend()
     ax.hold(savehold)
