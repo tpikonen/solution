@@ -102,7 +102,7 @@ def plot_iq(ax, dat, err=1, smerr=0, **kwargs):
         maxerr[maxerr < okmin] = okmin
         ax.fill_between(x, minerr, maxerr, alpha=0.1, linewidth=0)
     ax.set_xlabel("q / (1/nm)")
-    ax.set_ylabel("I(q)")
+    ax.set_ylabel("I")
     if kwargs.has_key('label'):
         ax.legend()
     ax.hold(savehold)
