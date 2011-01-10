@@ -39,7 +39,7 @@ def main():
     plt.rcParams['legend.fontsize'] = 12.0
     ax = fig.add_axes([0.1, 0.1, 0.85, 0.85])
     for dat in dats:
-        plot_iq(ax, dat[0], dat[1], opts.err, opts.smerr)
+        plot_iq(ax, dat[0], opts.err, opts.smerr, label=dat[1])
     fig.set_size_inches(15,10)
 
     plt.show()
