@@ -81,7 +81,7 @@ def get_diode(specscans, scanno, pointno):
     Argument `specscans` is the list returned from Specparser.parse()['scans'].
     Scan number `scanno` is indexed starting from 1, as in SPEC.
     """
-    scan = specscans[scanno-1]
+    scan = specscans[scanno]
     assert(scanno == scan['number'])
     diodeval = scan['counters']['diode'][pointno]
     return diodeval
@@ -92,7 +92,7 @@ def get_scanlen(specscans, scanno):
 
     Scan number `scanno` is indexed starting from 1, as in SPEC.
     """
-    scan = specscans[scanno-1]
+    scan = specscans[scanno]
     assert(scanno == scan['number'])
     return scan['npoints']
 
@@ -267,8 +267,7 @@ def stack_files(scanfile, conffile, outdir):
     """
     scans = read_yaml(scanfile)
     conf = read_experiment_conf(conffile)
-    _spec = read_spec(Specfile)
-    specscans = spec['scans']
+    specscans = read_spec(Specfile)
     radind = read_pickle(Indfile)
     q = radind['q']
     scannos = scans.keys()
