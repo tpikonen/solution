@@ -1,0 +1,4 @@
+#!/bin/bash
+
+exec python $HOME/python/agbeh/qagbeh.py $*
+
