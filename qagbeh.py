@@ -8,10 +8,11 @@ import modelfit as mf
 from scipy.signal import medfilt
 from centerfits import fwhm
 from optparse import OptionParser
+from matformats import read_matclean
 
 description="Determine q-scale from a diffraction standard giving equally spaced peaks,\n silver behenate by default."
 
-usage="%prog -b <radindfile.pickle> [-o <outputfile.yaml>] file.cbf"
+usage="%prog -b <radindfile.mat> [-o <outputfile.yaml>] file.cbf"
 
 
 def get_firstpeak(Iagbeh):
@@ -50,7 +51,6 @@ def qagbeh(Iagbeh, first_index=None, wavel=0.1, Dlatt=5.8380, peaks=None):
     # Use wider range around the peak for finding initial fitting parameters
     Wini = 2*int(peaks[0] * width_per_firstindex)
     Wfit = int(peaks[0] * width_per_firstindex)
-    npeaks = len(peaks)
     opos = []
     optpars = []
     for i in range(len(peaks)):
@@ -121,7 +121,7 @@ def main():
     oprs = OptionParser(usage=usage, description=description)
     oprs.add_option("-b", "--bins",
         action="store", type="string", dest="binfile", default=None,
-        help="Read bins from a 'radind.pickle' file (output of function radbin.make_radind).")
+        help="Read bins from a 'radind.mat' file (output of make_radind).")
     oprs.add_option("-o", "--output",
         action="store", type="string", dest="outfile", default="qscale.yaml",
         help="Output file containing the q-scale in looped YAML format. Default is 'qscale.yaml'")
@@ -134,7 +134,7 @@ def main():
         oprs.error("One input file required.")
 
     if opts.binfile:
-        radind = csaxsformats.read_pickle(opts.binfile)
+        radind = read_matclean(opts.binfile)['radind']
     else:
         oprs.error("Binfile name is missing.")
 
