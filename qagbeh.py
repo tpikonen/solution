@@ -8,9 +8,15 @@ import modelfit as mf
 from scipy.signal import medfilt
 from centerfits import fwhm
 from optparse import OptionParser
-from matformats import read_matclean
+from matformats import read_matclean, write_mat
 
-description="Determine q-scale from a diffraction standard giving equally spaced peaks,\n silver behenate by default."
+description="""\
+Determine q-scale from a diffraction standard giving equally spaced peaks,
+silver behenate by default.
+
+Writes  to the 'q' key in the input bins dictionary, and also to
+'qscale.yaml' file.
+"""
 
 usage="%prog -b <radindfile.mat> [-o <outputfile.yaml>] file.cbf"
 
@@ -125,6 +131,9 @@ def main():
     oprs.add_option("-o", "--output",
         action="store", type="string", dest="outfile", default="qscale.yaml",
         help="Output file containing the q-scale in looped YAML format. Default is 'qscale.yaml'")
+    oprs.add_option("-n", "--readonly-bins",
+        action="store_false", dest="writebin", default=True,
+        help="Do not write q-scale to the binfile given with option -b.")
     (opts, args) = oprs.parse_args()
 
     if len(args) == 1:
@@ -147,6 +156,9 @@ def main():
     q = qagbeh(Iagbeh)
     lq = loopyaml.Loopdict({'q': map(float, list(q))}, ['q'])
     yamlformats.write_yaml(lq, opts.outfile)
+    if opts.writebin:
+        radind['q'] = q
+        write_mat('radind', fname=opts.binfile, value=radind, overwrite=1)
 
 if __name__ == "__main__":
     main()
