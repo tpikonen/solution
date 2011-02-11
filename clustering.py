@@ -7,6 +7,7 @@ import scipy.special
 import temp_distance as dist # a fixed version of scipy.spatial.distance
 from sxsplots import plot_iq
 from biosxs_reduce import mean_stack
+from scipy.special import gammaln as gamln
 
 
 def clean_indices(x, y):
@@ -156,7 +157,12 @@ def chi2norm_pdf(x, k):
     The normalized chi^2_k is sum of squares of k independent standard normal
     variates divided by k.
     """
-    return k*scipy.stats.distributions.chi2.pdf(k*x, k)
+    # chi2_pdf() is the chi2.pdf implementation from scipy 0.8,
+    # the version in scipy 0.7 is broken.
+    def chi2_pdf(x, df):
+        return np.exp((df/2.-1)*np.log(x+1e-300) - x/2. - gamln(df/2.) - (np.log(2)*df)/2.)
+    #return k*scipy.stats.distributions.chi2.pdf(k*x, k)
+    return k*chi2_pdf(k*x, k)
 
 
 def distmat_reps(reps):
