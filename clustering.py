@@ -85,7 +85,7 @@ def plot_clusterhist(cdm, N, threshold):
     for i in range(1): #len(clusters)):
         dd = get_subdists(dmat, clusters[i])
         plt.hist(dd, bins=bins, normed=True, histtype='step', label="Cluster #%d" % i)
-    plt.plot(bins, chi2norm_pdf(bins, N), label="Chisq distrib.")
+    plt.plot(bins, chi2norm_pdf(bins, N), label="Chisq_%d PDF"%N)
     plt.legend()
     plt.axis('tight')
 
@@ -99,7 +99,9 @@ def plot_dendrogram(links, threshold=1.0):
     at = plt.axis()
     cchis = links[:,2]
     delta = 0.05*(np.max(cchis) - np.min(cchis))
-    plt.axis((at[0], at[1], np.min(cchis) - delta, np.max(cchis) + delta))
+    plt.axhline(threshold, linestyle='--', label="Threshold")
+    #plt.legend()
+    plt.axis((at[0], at[1], np.min(cchis) - delta, max(threshold, np.max(cchis)) + delta))
 
 
 def plot_average(dat_fil, dat_all, cdm, threshold=1.0):
