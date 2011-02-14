@@ -21,7 +21,7 @@ Writes  to the 'q' key in the input bins dictionary, and also to
 usage="%prog -b <radindfile.mat> [-o <outputfile.yaml>] file.cbf"
 
 
-def get_firstpeak(Iagbeh):
+def get_firstpeak(Iagbeh, plot=0):
     """Return an estimate for the first peak position in AgBeh scattering.
     """
     #FIXME: Test with noisy data and check for smoothing algorithm other
@@ -30,10 +30,19 @@ def get_firstpeak(Iagbeh):
     dlog = medfilt(np.diff(filt), kernel_size=5)
     highs = 1.0*(dlog > 0.5*np.nanmax(dlog))
     peaks = mlab.find(np.diff(highs) < -0.5)
+    print("Initial peak positions: %s" % peaks)
+    if plot:
+        plt.clf()
+        plt.hold(1)
+        plt.plot(dlog)
+        for pp in peaks:
+            plt.axvline(pp, color="red")
+        plt.show()
     return peaks[0]
 
 
-def qagbeh(Iagbeh, first_index=None, wavel=0.1, Dlatt=5.8380, peaks=None):
+# FIXME: Get rid of wavelength argument, or find it automatically
+def qagbeh(Iagbeh, first_index=None, wavel=0.1, Dlatt=5.8380, peaks=None, debug=0):
     """Return q-scale optimized from silver behenate scattering.
 
     Keyword arguments:
@@ -49,7 +58,7 @@ def qagbeh(Iagbeh, first_index=None, wavel=0.1, Dlatt=5.8380, peaks=None):
 
     if peaks is None:
         if first_index is None:
-            first_index = get_firstpeak(Iagbeh)
+            first_index = get_firstpeak(Iagbeh, plot=debug)
         if len(Iagbeh) < first_index:
             raise ValueError("first_index must be inside the intensity array.")
         endcutoff = 2*int(first_index * width_per_firstindex)
@@ -74,6 +83,7 @@ def qagbeh(Iagbeh, first_index=None, wavel=0.1, Dlatt=5.8380, peaks=None):
         opos.append(lopt[1])
 
     opos = np.array(opos)
+    print("Refined peak positions:\n %s" % opos)
     N = np.arange(1, len(peaks)+1)
     qn = (2*np.pi/Dlatt) * N
 
@@ -113,9 +123,9 @@ def qagbeh(Iagbeh, first_index=None, wavel=0.1, Dlatt=5.8380, peaks=None):
     plt.hold(1)
     for (fopt, inds) in optpars:
         plt.semilogy(q[inds], mf.lorentzconstant(fopt, inds))
-        plt.axvline(q[np.round(fopt[1])], color='red')
+        plt.axvline(q[np.round(fopt[1])], color='red', label="Fitted pos.")
     for ppos in qn:
-        plt.axvline(ppos, color='blue')
+        plt.axvline(ppos, color='blue', label="Theor. pos.")
 
     plt.hold(0)
     plt.show()
@@ -135,6 +145,9 @@ def main():
     oprs.add_option("-n", "--readonly-bins",
         action="store_false", dest="writebin", default=True,
         help="Do not write q-scale to the binfile given with option -b.")
+    oprs.add_option("-d", "--debug",
+        action="store_true", dest="debug", default=False,
+        help="Show extra debug plots.")
     (opts, args) = oprs.parse_args()
 
     if len(args) == 1:
@@ -154,7 +167,7 @@ def main():
     frame = detformats.read_cbf(fname)
     Iagbeh = r.binstats(radind['indices'], frame.im)[0] # Get the mean
 
-    q = qagbeh(Iagbeh)
+    q = qagbeh(Iagbeh, debug=opts.debug)
     lq = loopyaml.Loopdict({'q': map(float, list(q))}, ['q'])
     yamlformats.write_yaml(lq, opts.outfile)
     if opts.writebin:
