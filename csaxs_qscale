@@ -1,4 +1,4 @@
 #!/bin/bash
 
-exec python $HOME/python/agbeh/qagbeh.py $*
+exec python ${PYHOME}/agbeh/qagbeh.py $*
 
