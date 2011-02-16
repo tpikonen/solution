@@ -8,19 +8,32 @@ def read_matdict(fname, **kwargs):
     Skips '__version__', '__globals__' and '__header__'.
     See scipy.io.loadmat for keyword arguments.
     """
+    d = read_matclean(fname)
+    api = IPython.ipapi.get()
+    for varname in d.keys():
+        api.to_user_ns({varname : d[varname]})
+        print(varname)
+
+
+def read_matclean(fname, **kwargs):
+    """Read a struct from a mat-file to a cleaned dict.
+
+    Skips '__version__', '__globals__' and '__header__'.
+    See scipy.io.loadmat for keyword arguments.
+    """
     d = loadmat(fname, struct_as_record=1, squeeze_me=1, chars_as_strings=1, **kwargs)
     d.pop('__version__')
     d.pop('__header__')
     d.pop('__globals__')
     api = IPython.ipapi.get()
+    outd = {}
     for varname in d.keys():
         rec = d[varname]
         dout = {}
         for kk in rec.dtype.fields.keys():
             dout[kk] = rec[kk][()]
-        api.to_user_ns({varname : dout})
-        print(varname)
-
+        outd.update({varname : dout})
+    return outd
 
 def read_matfile(fname, **kwargs):
     """Read variables from a mat-file to ipython interactive namespace.
