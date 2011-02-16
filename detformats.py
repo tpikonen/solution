@@ -46,13 +46,16 @@ def read_tif_pilatus(fname):
 
 
 def read_spec(fname):
-    """Read a spec scan file to a dictionary."""
+    """Read scans from a SPEC dat-file to a list of dictionaries.
+
+    The first element of the return list is the list of headers, the
+    rest are scan dictionaries.
+    """
     import specparser as sp
-    fin = open(fname)
-    p = sp.Specparser(fin)
-    d = p.parse()
-    fin.close()
-    return d
+    with open(fname) as fin:
+        p = sp.Specparser(fin)
+        scans = p.parse()
+    return scans
 
 
 def read_mar345hdr(fname):
