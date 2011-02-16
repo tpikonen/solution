@@ -123,9 +123,20 @@ def plot_average(dat_fil, dat_all, cdm, threshold=1.0):
     plot_dendrogram(links, threshold)
 
 
-def plot_repstats(reps, threshold=1.0):
-    """Plot cluster statistics and filtered means of `reps`.
+def repstats(reps, threshold=1.0, plot=1):
+    """Return a cluster-filtered mean of repetitions in `reps`.
+
+    Keyword arguments:
+        `threshold` : chisq threshold to use in discrimination.
+        `plot` : Plot results, if True.
     """
+    cdm = distmat_reps(reps)
+    links = hc.linkage(cdm, method='complete')
+    clist = filter_with_linkage(links, threshold)
+    filst = mean_stack(reps[clist[0],...])
+    if not plot:
+        return filst
+
     plt.clf()
 
     plt.subplot(221)
@@ -133,10 +144,7 @@ def plot_repstats(reps, threshold=1.0):
     ax = plt.gca()
     plot_iq(ax, reps[0,...].T, smerr=sm, label="First rep")
     plot_iq(ax, mean_stack(reps).T, smerr=sm, label="All reps")
-    cdm = distmat_reps(reps)
-    links = hc.linkage(cdm, method='complete')
-    clist = filter_with_linkage(links, threshold)
-    plot_iq(ax, mean_stack(reps[clist[0],...]).T, smerr=sm, label="Largest cluster")
+    plot_iq(ax, filst.T, smerr=sm, label="Largest cluster")
     plt.legend()
 
     plt.subplot(222)
@@ -147,9 +155,9 @@ def plot_repstats(reps, threshold=1.0):
     plot_clusterhist(cdm, N, threshold)
 
     plt.subplot(224)
-    links = hc.linkage(cdm, method='complete')
     plot_dendrogram(links, threshold)
 
+    return filst
 
 def chi2norm_pdf(x, k):
     """Return pdf of normalized chi^2_k distribution at x.
