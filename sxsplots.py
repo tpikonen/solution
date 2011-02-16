@@ -1,12 +1,11 @@
 import sys
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
-import numpy
 import numpy as np
 import scipy.interpolate as ip
 
 
-def splot(*args, **kwargs):
+def preplot(*args, **kwargs):
     dat = args[0]
     rest = args[1:]
     dsh = dat.shape
@@ -15,17 +14,22 @@ def splot(*args, **kwargs):
     fig = plt.gcf()
     ax = fig.gca()
     plot_iq(ax, dat, *rest, **kwargs)
+    return ax
+
+
+def splot(*args, **kwargs):
+    """Semilogy plot of a dat-array."""
+    ax = preplot(*args, **kwargs)
+    ax.set_yscale('log')
     plt.show()
 
 
 def llplot(*args, **kwargs):
-    """Loglog-plot of a dat-array"""
-    dat = args[0]
-    rest = args[1:]
-    dsh = dat.shape
-    if dsh[1] > dsh[0] and dsh[0] < 8:
-        dat = dat.T
-    plt.loglog(dat[:,0], dat[:,1], *rest, **kwargs)
+    """Loglog-plot of a dat-array."""
+    ax = preplot(*args, **kwargs)
+    ax.set_yscale('log')
+    ax.set_xscale('log')
+    plt.show()
 
 
 def pplot(*args, **kwargs):
