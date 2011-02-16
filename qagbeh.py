@@ -2,13 +2,13 @@ import sys, os.path, glob
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
-import detformats, csaxsformats, yamlformats, loopyaml
+import xformats.detformats, csaxsformats, xformats.yamlformats, loopyaml
 import radbin as r
 import modelfit as mf
 from scipy.signal import medfilt
 from centerfits import fwhm
 from optparse import OptionParser
-from matformats import read_matclean, write_mat
+from xformats.matformats import read_matclean, write_mat
 
 description="""\
 Determine q-scale from a diffraction standard giving equally spaced peaks,
@@ -164,12 +164,12 @@ def main():
     if not "indices" in radind:
         oprs.error("Binfile is missing 'indices' key.")
 
-    frame = detformats.read_cbf(fname)
+    frame = xformats.detformats.read_cbf(fname)
     Iagbeh = r.binstats(radind['indices'], frame.im)[0] # Get the mean
 
     q = qagbeh(Iagbeh, debug=opts.debug)
     lq = loopyaml.Loopdict({'q': map(float, list(q))}, ['q'])
-    yamlformats.write_yaml(lq, opts.outfile)
+    xformats.yamlformats.write_yaml(lq, opts.outfile)
     if opts.writebin:
         radind['q'] = q
         write_mat('radind', fname=opts.binfile, value=radind, overwrite=1)
