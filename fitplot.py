@@ -5,7 +5,7 @@ import numpy
 import numpy as np
 import scipy.interpolate as ip
 from optparse import OptionParser
-from atsasformats import read_dat
+from xformats.atsasformats import read_dat
 from sxsplots import plot_iq
 
 description="Plot .fit / .fir files."

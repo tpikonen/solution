@@ -2,7 +2,7 @@ import sys
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import numpy as np
-from atsasformats import read_gnom
+from xformats.atsasformats import read_gnom
 from optparse import OptionParser
 from sxsplots import plot_iq, plot_pr
 
