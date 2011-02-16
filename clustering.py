@@ -8,6 +8,8 @@ import temp_distance as dist # a fixed version of scipy.spatial.distance
 from sxsplots import plot_iq
 from biosxs_reduce import mean_stack
 from scipy.special import gammaln as gamln
+from scipy.io import loadmat
+from xformats.matformats import write_mat
 
 
 def clean_indices(x, y):
@@ -177,6 +179,26 @@ def distmat_reps(reps):
     """Return a condensed chi**2 distance matrix from `reps`.
     """
     return dist.pdist(reps, metric=chivectors)
+
+
+def filter_stack(stack, threshold=1.0, plot=1):
+    """Return a stack cluster-averaged over repetitions (2nd index)."""
+    sh = stack.shape
+    fil = np.zeros((sh[0], sh[2], sh[3]))
+    for pos in range(sh[0]):
+        print("Pos. %d" % pos)
+        fil[pos,...] = repstats(stack[pos,...], threshold, plot)
+        plt.waitforbuttonpress()
+    return fil
+
+
+def rawstacks_to_bufstacks(buflist, threshold=1.15):
+    for scanno in buflist:
+        fname = "s%02d.mat" % scanno
+        key = "s%02d" % scanno
+        stack = loadmat(fname)[key]
+        fst = filter_stack(stack, threshold)
+        write_mat("bufs%0d" % scanno, value=fst)
 
 
 def test(threshold=1.1):
