@@ -10,8 +10,8 @@ from sxsplots import logshow
 from xformats.detformats import read_cbf, read_mask
 from optparse import OptionParser
 
-usage="%prog agbeh.cbf"
-description="Determine the direct beam center from a diffraction pattern."
+usage="%prog agbeh.cbf [agbeh2.cbf ...]"
+description="Determine the direct beam center from diffraction patterns."
 
 # FIXME: This file is a mess.
 
