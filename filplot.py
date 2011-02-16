@@ -1,5 +1,5 @@
 from optparse import OptionParser
-from filter_repetitions import *
+from solution.filter_repetitions import *
 
 description="Plot a result from filtering and averaging repetitions."
 
