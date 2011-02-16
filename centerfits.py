@@ -7,7 +7,7 @@ import scipy.interpolate as ip
 import matplotlib.pyplot as plt
 import radbin as c
 from sxsplots import logshow
-from detformats import read_cbf, read_mask
+from xformats.detformats import read_cbf, read_mask
 from optparse import OptionParser
 
 usage="%prog agbeh.cbf"
