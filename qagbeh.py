@@ -1,4 +1,5 @@
 import sys, os.path, glob
+import scipy.constants
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
@@ -20,6 +21,9 @@ Writes  to the 'q' key in the input bins dictionary, and also to
 
 usage="%prog -b <radindfile.mat> [-o <outputfile.yaml>] file.cbf"
 
+hc_keV_nm = scipy.constants.physical_constants['inverse meter-electron volt relationship'][0] * 1e9 / 1e3 # 1.239... keV * nm
+
+default_E = hc_keV_nm / 0.1 # 12.4 keV
 
 def get_firstpeak(Iagbeh, plot=0):
     """Return an estimate for the first peak position in AgBeh scattering.
@@ -41,8 +45,7 @@ def get_firstpeak(Iagbeh, plot=0):
     return peaks[0]
 
 
-# FIXME: Get rid of wavelength argument, or find it automatically
-def qagbeh(Iagbeh, first_index=None, wavel=0.1, Dlatt=5.8380, peaks=None, debug=0):
+def qagbeh(Iagbeh, first_index=None, wavel=0.1, Dlatt=5.8380, pixel=0.172, peaks=None, debug=0):
     """Return q-scale optimized from silver behenate scattering.
 
     Keyword arguments:
@@ -50,6 +53,7 @@ def qagbeh(Iagbeh, first_index=None, wavel=0.1, Dlatt=5.8380, peaks=None, debug=
             in the `Iagbeh`. If None, then it is estimated with a heuristic.
         `wavel` : Wavelength of the radiation in nanometers (!).
         `Dlatt` : Lattice spacing in nm, default 5.8380 nm for AgBeh.
+        `pixel` : Pixel size in mm.
         `peaks` : A list of all approximate peak indices (should be supplied
             only if automatic peak detection fails)
     """
@@ -108,7 +112,7 @@ def qagbeh(Iagbeh, first_index=None, wavel=0.1, Dlatt=5.8380, peaks=None, debug=
 #    L = popt[0][0]
 #    wavel = popt[0][1]
 
-    print("S-to-D = %g pixels (%g mm for Pilatus)" % (L, L*0.172))
+    print("S-to-D = %g pixels (%g mm for %.4g mm pixel with %.4g nm radiation)"         % (L, L*pixel, pixel, wavel))
     q = (4*np.pi/wavel)*np.sin(0.5*np.arctan(np.arange(len(Iagbeh))/L))
 #   fitted_peakpos = (4*np.pi/wavel)*np.sin(0.5*np.arctan(opos/L))
     plt.clf()
@@ -148,6 +152,9 @@ def main():
     oprs.add_option("-d", "--debug",
         action="store_true", dest="debug", default=False,
         help="Show extra debug plots.")
+    oprs.add_option("-E", "--energy",
+        action="store", type="float", dest="energy", default=default_E,
+        help="Energy (in keV) to use in S-D distance determination. Default %3g" % default_E)
     (opts, args) = oprs.parse_args()
 
     if len(args) == 1:
@@ -167,7 +174,8 @@ def main():
     frame = xformats.detformats.read_cbf(fname)
     Iagbeh = r.binstats(radind['indices'], frame.im)[0] # Get the mean
 
-    q = qagbeh(Iagbeh, debug=opts.debug)
+    wavel = hc_keV_nm / opts.energy
+    q = qagbeh(Iagbeh, wavel=wavel, debug=opts.debug)
     lq = loopyaml.Loopdict({'q': map(float, list(q))}, ['q'])
     xformats.yamlformats.write_yaml(lq, opts.outfile)
     if opts.writebin:
