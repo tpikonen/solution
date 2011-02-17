@@ -3,10 +3,10 @@ import glob, re, os.path, sys, logging, hashlib
 import loopyaml
 import numpy as np
 import radbin as r
-from detformats import read_cbf, read_spec
-from yamlformats import read_yaml, write_yaml, read_ydat, write_ydat
-from csaxsformats import read_pickle
-from atsasformats import read_dat
+from xformats.detformats import read_cbf, read_spec
+from xformats.yamlformats import read_yaml, write_yaml, read_ydat, write_ydat
+from xformats.atsasformats import read_dat
+from xformats.matformats import read_matclean
 from scipy.io.matlab import savemat, loadmat
 
 #Basedir = '/afs/psi.ch/project/cxs/users/ikonen/ND-Rhod-2010-04-24/Data10/'

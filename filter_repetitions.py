@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from yamlformats import read_yaml, write_yaml, read_ydat, write_ydat
+from xformats.yamlformats import read_yaml, write_yaml, read_ydat, write_ydat
 from scipy.io.matlab.mio import loadmat
 from sxsplots import plot_iq
 
