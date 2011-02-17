@@ -1,7 +1,7 @@
 import warnings, scipy.signal
 import numpy as np
 import numpy.ma as ma
-from detformats import read_cbf, write_pnglog
+from xformats.detformats import read_cbf, write_pnglog
 from optparse import OptionParser
 
 description="Write a bad pixel mask based on analysis of a series of input frames"
