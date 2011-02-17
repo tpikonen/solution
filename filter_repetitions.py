@@ -84,13 +84,12 @@ def write_filtered(avg, incmap, fname, first=None):
 def read_filtered(fname):
     """Return dat-array, inclusion map and first data read from file `fname`.
     """
-    dat = read_ydat(fname)
+    dat, yd = read_ydat(fname, addict=1)
     first = None
     if dat.shape[0] == 5:
         first = np.zeros((3, dat.shape[1]))
         first[0,:] = dat[0,:]
         first[1:3,:] = dat[3:5,:]
-    yd = read_yaml(fname)
     incmap = strings_to_incmap(yd['incmap']).T
     return (dat[0:3,:], incmap, first)
 
