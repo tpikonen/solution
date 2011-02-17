@@ -22,8 +22,11 @@ def write_yaml(o, ff, **kwargs):
             loopyaml.dump(o, fp, **kwargs)
 
 
-def read_ydat(fname):
+def read_ydat(fname, addict=False):
     """Return a (N, ncols) numpy array read from a 'YAML-dat' (or ydat) file.
+
+    If `addict` is True, also return the rest of the keys read from the file
+    in an (array, dict) tuple.
     """
     yd = read_yaml(fname)
     ncols = len(yd['=cols'])
@@ -31,7 +34,12 @@ def read_ydat(fname):
     assert((P % ncols ) == 0)
     yarr = np.array(yd['=loop']).reshape((P / ncols, ncols)).T
     # FIXME: Assumes that the columns are in a 'canonical' order [q, I, Ierr]
-    return yarr.squeeze()
+    if addict:
+        yd.pop('=cols')
+        yd.pop('=loop')
+        return (yarr.squeeze(), yd)
+    else:
+        return yarr.squeeze()
 
 
 def write_ydat(arr, ff, cols=['q', 'I', 'Ierr'], addict={}):
