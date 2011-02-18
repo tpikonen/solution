@@ -134,7 +134,8 @@ def mean_stack(stack):
     """Return the mean (and error) of a (M, 3, n) stack along 1st dimension.
     """
     ish = stack.shape
-    retval = np.zeros((ish[1], ish[2]))
+    assert(ish[1] >= 3)
+    retval = np.zeros((3, ish[2]))
     retval[0,:] = stack[0,0,:]
     retval[1,:] = np.mean(stack[:,1,:], axis=0)
     retval[2,:] = np.sqrt(np.sum(np.square(stack[:,2,:]), axis=0))/ish[0]
