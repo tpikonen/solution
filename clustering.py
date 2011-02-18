@@ -6,10 +6,11 @@ import scipy.stats.distributions
 import scipy.special
 import temp_distance as dist # a fixed version of scipy.spatial.distance
 from sxsplots import plot_iq
-from biosxs_reduce import mean_stack
+from biosxs_reduce import mean_stack, stack_datafiles, md5_file
 from scipy.special import gammaln as gamln
 from scipy.io import loadmat
 from xformats.matformats import write_mat
+from xformats.yamlformats import write_ydat, read_ydat
 
 
 def clean_indices(x, y):
@@ -185,6 +186,65 @@ def rawstacks_to_bufstacks(buflist, threshold=1.15):
         stack = loadmat(fname)[key]
         fst = filter_stack(stack, threshold)
         write_mat("bufs%0d" % scanno, value=fst)
+
+
+def read_clustered(fname):
+    dat, yd = read_ydat(fname, addict=1)
+    first = None
+    aver = None
+    if dat.shape[0] >= 5:
+        first = np.zeros((3, dat.shape[1]))
+        first[0,:] = dat[0,:]
+        first[1:3,:] = dat[3:5,:]
+    if dat.shape[0] >= 7:
+        aver = np.zeros((3, dat.shape[1]))
+        aver[0,:] = dat[0,:]
+        aver[1:3,:] = dat[5:7,:]
+    cdm = np.array(yd['chi2matrix'])
+    incinds = np.array(yd['incinds'])
+    links = np.array(yd['linkage'])
+    threshold = yd['chi2cutoff']
+
+    return (dat[0:3,:], first, aver, incinds, cdm, links, threshold)
+
+
+# FIXME: Determine the cutoff chi2 automatically from the CDM
+def average_positions(filenames, chi2cutoff=1.15, write=None):
+    """Filter and average over positions in a capillary.
+
+    """
+    filenames.sort()
+    stack = stack_datafiles(filenames)
+
+    incinds, cdm, links = repstats(stack, threshold=chi2cutoff)
+#    rinds, chis = filter_stack(stack, threshold=chi2cutoff)
+#    print(rinds)
+#    print(chis)
+    ms = mean_stack(stack[incinds,...])
+
+    disinds = range(len(filenames))
+    for i in incinds:
+        disinds.remove(i)
+    included  = [ [filenames[i], md5_file(filenames[i])]
+        for i in incinds ]
+    discarded = [ [filenames[i], md5_file(filenames[i])]
+        for i in disinds ]
+    ad = { 'chi2cutoff': float(chi2cutoff),
+        'included': included,
+        'discarded': discarded,
+        'chi2matrix' : map(float, list(cdm)),
+        'incinds' : map(int, list(incinds)),
+        'linkage' : [ map(float, ll) for ll in list(links) ] }
+
+    outarr = np.zeros((7, ms.shape[1]))
+    outarr[0:3,:] = ms
+    outarr[3:5,:] = stack[0,1:3,:]
+    outarr[5:7,:] = mean_stack(stack)[1:3,:]
+
+    if write is not None:
+        fname = write
+        write_ydat(outarr, fname, addict=ad, cols=['q', 'I', 'Ierr', 'I_first', 'Ierr_first', 'I_all', 'Ierr_all'])
+    return ms
 
 
 def test(threshold=1.1):
