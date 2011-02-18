@@ -115,6 +115,7 @@ def errsubtract(a, b):
     retval[0,:] = a[0,:]
     retval[1,nn] = a[1,nn] - b[1,nn]
     retval[2,nn] = np.sqrt(np.square(a[2,nn]) + np.square(b[2,nn]))
+    retval[1:3,np.logical_not(nn)] = np.nan
     return retval
 
 
