@@ -1,8 +1,10 @@
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from xformats.yamlformats import read_yaml, write_yaml, read_ydat, write_ydat
 from scipy.io.matlab.mio import loadmat
 from sxsplots import plot_iq
+from biosxs_reduce import stack_datafiles
 
 
 def clean_indices(x, y):
@@ -162,6 +164,7 @@ def run_filter_on_stacks(filelist):
         stack = loadmat(fname)[varname]
         for pos in range(stack.shape[0]):
             print("File: %s, pos %d" % (fname, pos))
+            sys.stdout.flush()
             first = stack[pos,0,...]
             avg, inds = chifilter_points(stack[pos,...])
             outname = "%s_p%d.yfil" % (varname, pos)
