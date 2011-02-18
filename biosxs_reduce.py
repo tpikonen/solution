@@ -119,15 +119,22 @@ def errsubtract(a, b):
     return retval
 
 
-def stack_ydat(stem, poslist, ending=".yaml"):
-    """Return a stack of ydat-files in poslist starting with `stem`.
+def stack_datafiles(fnames):
+    """Return an array containing curves from the given list of files.
+
+    Files can be in (.dat/.yaml/.ydat) format.
     """
-    ll = []
-    for p in poslist:
-        fname = "%s%d%s" % (stem, p, ending)
-        ll.append(read_ydat(fname))
-    stack = np.dstack(ll).transpose((2,0,1))
-    return stack
+    if fnames[0].endswith(".dat") or fnames[0].endswith(".fit"):
+        read_func = read_dat
+    else:
+        read_func = read_ydat
+
+    arr0 = read_func(fnames[0])
+    outarr = np.zeros((len(fnames), arr0.shape[0], arr0.shape[1]))
+    outarr[0,:,:] = arr0
+    for i in range(1, len(fnames)):
+        outarr[i,:,:] = read_func(fnames[i])
+    return outarr
 
 
 def mean_stack(stack):
