@@ -72,23 +72,20 @@ def plot_distmat(cdm):
     plt.colorbar()
 
 
-def plot_clusterhist(cdm, N, threshold):
+def plot_clusterhist(cdm, cluster, N, threshold):
     """Plot distance histograms from condensed distance matrix `cdm`.
 
-    Plot distance histograms of full distance matrix, the largest cluster
-    and the theoretical chi-squared distribution for `N` elements.
+    Plot distance histograms of full distance matrix, elements given in
+    `cluster` and the theoretical chi-squared distribution for `N` elements.
     """
     plt.hold(1)
     nbins = 4*int(np.sqrt(len(cdm)))
-    (_, bins, _) = plt.hist(cdm, bins=nbins, normed=True, histtype='step', label='Full')
-    links = hc.linkage(cdm, method='complete')
-    clusters = filter_with_linkage(links, threshold)
-    print("Clusters: %s" % str(clusters))
+    _, bins, _ = plt.hist(cdm, bins=nbins, normed=True, histtype='step', label='Full')
     dmat = hc.distance.squareform(cdm)
-    for i in range(1): #len(clusters)):
-        dd = get_subdists(dmat, clusters[i])
-        plt.hist(dd, bins=bins, normed=True, histtype='step', label="Cluster #%d" % i)
-    plt.plot(bins, chi2norm_pdf(bins, N), label="Chisq_%d PDF"%N)
+    dd = get_subdists(dmat, cluster)
+    plt.hist(dd, bins=bins, normed=True, histtype='step', label="Cluster")
+    xx = np.linspace(min(0.8, np.min(bins)), max(1.2, np.max(bins)), 128)
+    plt.plot(xx, chi2norm_pdf(xx, N), label="Chisq_%d PDF"%N)
     plt.legend()
     plt.axis('tight')
 
@@ -107,22 +104,28 @@ def plot_dendrogram(links, threshold=1.0):
     plt.axis((at[0], at[1], np.min(cchis) - delta, max(threshold, np.max(cchis)) + delta))
 
 
-def plot_average(dat_fil, dat_all, cdm, threshold=1.0):
-    """Plot outlier-filtered average and unfiltered average, plus cluster stats.
-    """
+def plot_repstats(filtered, first, aver, inclist, cdm, links, threshold):
     plt.clf()
+
     plt.subplot(221)
+    sm = 1
     ax = plt.gca()
-    plot_iq(ax, dat_all.T, smerr=1)
-    plot_iq(ax, dat_fil.T, smerr=1)
+    plot_iq(ax, first.T, smerr=sm, label="First rep")
+    plot_iq(ax, aver.T, smerr=sm, label="All reps")
+    plot_iq(ax, filtered.T, smerr=sm, label="Largest cluster, %d reps" % len(inclist))
+    plt.legend()
+
     plt.subplot(222)
     plot_distmat(cdm)
+
     plt.subplot(223)
-    N = dat_fil.shape[1]
-    plot_clusterhist(cdm, N, threshold)
+    N = filtered.shape[-1]
+    plot_clusterhist(cdm, inclist, N, threshold)
+
     plt.subplot(224)
-    links = hc.linkage(cdm, method='complete')
     plot_dendrogram(links, threshold)
+
+    plt.show()
 
 
 def repstats(reps, threshold=1.0, plot=1):
@@ -135,31 +138,14 @@ def repstats(reps, threshold=1.0, plot=1):
     cdm = distmat_reps(reps)
     links = hc.linkage(cdm, method='complete')
     clist = filter_with_linkage(links, threshold)
-    filst = mean_stack(reps[clist[0],...])
-    if not plot:
-        return filst
+    print("Clusters: %s" % str(clist))
+    if plot:
+        first = reps[0,...]
+        aver = mean_stack(reps)
+        filtered = mean_stack(reps[clist[0],...])
+        plot_repstats(filtered, first, aver, clist[0], cdm, links, threshold)
 
-    plt.clf()
-
-    plt.subplot(221)
-    sm = 1
-    ax = plt.gca()
-    plot_iq(ax, reps[0,...].T, smerr=sm, label="First rep")
-    plot_iq(ax, mean_stack(reps).T, smerr=sm, label="All reps")
-    plot_iq(ax, filst.T, smerr=sm, label="Largest cluster")
-    plt.legend()
-
-    plt.subplot(222)
-    plot_distmat(cdm)
-
-    plt.subplot(223)
-    N = reps.shape[-1]
-    plot_clusterhist(cdm, N, threshold)
-
-    plt.subplot(224)
-    plot_dendrogram(links, threshold)
-
-    return filst
+    return (clist[0], cdm, links)
 
 def chi2norm_pdf(x, k):
     """Return pdf of normalized chi^2_k distribution at x.
