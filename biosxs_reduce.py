@@ -271,21 +271,19 @@ def stack_scan(conf, scanno, specscans, radind, modulus=10):
     return stack, fnames
 
 
-def stack_files(scanfile, conffile, outdir):
+def stack_files(scanfile, conffile, outdir, modulus=10):
     """Create stacks from scans read from `scanfile` and write the to files.
     """
     scans = read_yaml(scanfile)
     conf = read_experiment_conf(conffile)
     specscans = read_spec(Specfile)
-    radind = read_pickle(Indfile)
+    radind = read_matclean(Indfile)['radind']
+    print(Indfile)
     q = radind['q']
     scannos = scans.keys()
     scannos.sort()
     for scanno in scannos:
-        outname = "stack_%03d" % scanno
-        stack, fnames = stack_scan(conf, scanno, specscans, radind, modulus=10)
+        outname = "s%02d" % scanno
+        stack, fnames = stack_scan(conf, scanno, specscans, radind, modulus)
+        stack = stack.squeeze()
         savemat(outdir+'/'+outname + ".mat", {outname: stack}, do_compression=1)
-        fstack, fdict = filter_stack(stack, fnames, chi2cutoff=1.2)
-        for i in range(len(fdict)):
-            yname = "dat_%04d_%01d.yaml" % (scanno, i)
-            write_yaml(fdict[i], outdir+'/'+yname)
