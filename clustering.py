@@ -81,12 +81,15 @@ def plot_clusterhist(cdm, cluster, N, threshold):
     """
     plt.hold(1)
     nbins = 4*int(np.sqrt(len(cdm)))
-    _, bins, _ = plt.hist(cdm, bins=nbins, normed=True, histtype='step', label='Full')
+    normed = False
+    _, bins, _ = plt.hist(cdm, bins=nbins, normed=normed, histtype='step', label='Full')
+    binw = bins[1] - bins[0]
     dmat = hc.distance.squareform(cdm)
     dd = get_subdists(dmat, cluster)
-    plt.hist(dd, bins=bins, normed=True, histtype='step', label="Cluster")
+    plt.hist(dd, bins=bins, normed=normed, histtype='step', label="Cluster")
     xx = np.linspace(min(0.8, np.min(bins)), max(1.2, np.max(bins)), 128)
-    plt.plot(xx, chi2norm_pdf(xx, N), label="Chisq_%d PDF"%N)
+    plt.plot(xx, binw*len(cdm)*chi2norm_pdf(xx, N), label="Chisq_%d full" % N)
+    plt.plot(xx, binw*len(dd)*chi2norm_pdf(xx, N), label="Chisq_%d clus" % N)
     plt.legend()
     plt.axis('tight')
 
