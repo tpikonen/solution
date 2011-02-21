@@ -72,6 +72,21 @@ def plot_distmat(cdm):
     plt.matshow(dmat, fignum=False)
     plt.colorbar()
 
+def plot_distmat_marginal(cdm):
+    """Plot the condensed distance matrix `cdm` by summing over one index.
+    """
+    dmat = hc.distance.squareform(cdm)
+    for i in range(dmat.shape[0]):
+        dmat[i,i] = 0.0
+    bardat = np.max(dmat, axis=0)
+#    bardat = np.mean(dmat, axis=0)
+    plt.bar(np.arange(dmat.shape[0]) - 0.4, bardat, width=0.8)
+    plt.title("Mean(chisq)")
+    delta = (np.max(bardat) - np.min(bardat)) / 5.0
+    xs = 0.5
+    ax = [-xs, dmat.shape[0]-xs, np.min(bardat)-delta, np.max(bardat)+delta]
+    ax = plt.axis(ax)
+
 
 def plot_clusterhist(cdm, cluster, N, threshold):
     """Plot distance histograms from condensed distance matrix `cdm`.
