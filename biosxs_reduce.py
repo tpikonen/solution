@@ -9,44 +9,8 @@ from xformats.atsasformats import read_dat
 from xformats.matformats import read_matclean
 from scipy.io.matlab import savemat, loadmat
 
-#Basedir = '/afs/psi.ch/project/cxs/users/ikonen/ND-Rhod-2010-04-24/Data10/'
-#Pilatusdir = Basedir + 'pilatus/S00000-00999/'
-#Expno = 12594
-#Detno = 1
-#Specfile = Basedir + 'spec/dat-files/specES1_started_2010_05_22_1133.dat'
-
-Basedir = None
-Pilatusdir = None
-Expno = None
-Detno = None
-Cbfext = None
-Specfile = None
-Indfile = None
 
 def read_experiment_conf(fname):
-    """Set global variables from conffile, also return them in a dict.
-    """
-    global Basedir
-    global Pilatusdir
-    global Expno
-    global Detno
-    global Cbfext
-    global Specfile
-    global Indfile
-
-    c = read_experiment_dict(fname)
-
-    Basedir = c['Basedir']
-    Pilatusdir = c['Pilatusdir']
-    Expno = c['Expno']
-    Detno = c['Detno']
-    Cbfext = c['Cbfext']
-    Specfile = c['Specfile']
-    Indfile = c['Indfile']
-    return c
-
-
-def read_experiment_dict(fname):
     """Return a dictionary with values read from conffile.
     """
     yd = read_yaml(fname)
