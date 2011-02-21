@@ -103,8 +103,10 @@ def plot_dendrogram(links, threshold=1.0):
     at = plt.axis()
     cchis = links[:,2]
     delta = 0.05*(np.max(cchis) - np.min(cchis))
-    plt.axhline(threshold, linestyle='--', label="Threshold")
-    #plt.legend()
+    clusterchi2 = links[np.argmax(links[links[:,2] < threshold, 3]), 2]
+    plt.axhline(threshold, linestyle='--', label="Threshold = %0.3g\nCluster = %0.3g"
+        % (threshold, clusterchi2))
+    plt.legend()
     plt.axis((at[0], at[1], np.min(cchis) - delta, max(threshold, np.max(cchis)) + delta))
 
 
