@@ -25,6 +25,33 @@ def read_experiment_conf(fname):
     return c
 
 
+def clean_indices(x, y):
+    """Return indices which contain only good floats in x and y.
+    """
+    nn = np.logical_not(np.logical_or(
+        np.logical_or(np.isnan(x[1,:]), np.isnan(y[1,:])),
+        np.logical_or((x[2,:] <= 0.0), (y[2,:] <= 0.0))))
+    return nn
+
+
+def chivectors(x, y):
+    nn = clean_indices(x, y)
+    N = np.sum(nn)
+    chi2 = (1.0/N)*np.sum((x[1,nn]-y[1,nn])**2 / (x[2,nn]**2+y[2,nn]**2))
+    return chi2
+
+
+def get_subdists(dmat, elist):
+    """Return distances of elems in `elist` from a dist. matrix `dmat`.
+    """
+    dists = []
+    Nel = len(elist)
+    for i in range(Nel):
+        for j in range(i+1, Nel):
+            dists.append(dmat[i, j])
+    return dists
+
+
 def get_framefilename(conf, scanno, pointno, burstno):
     """Return the filename of a frame at a given scan, point, and burst number.
     """
@@ -122,22 +149,6 @@ def sum_stack(stack):
     retval[1,:] = np.sum(stack[:,1,:], axis=0)
     retval[2,:] = np.sqrt(np.sum(np.square(stack[:,2,:]), axis=0))
     return retval
-
-
-def clean_indices(x, y):
-    """Return indices which contain only good floats in x and y.
-    """
-    nn = np.logical_not(np.logical_or(
-        np.logical_or(np.isnan(x[1,:]), np.isnan(y[1,:])),
-        np.logical_or((x[2,:] <= 0.0), (y[2,:] <= 0.0))))
-    return nn
-
-
-def chivectors(x, y):
-    nn = clean_indices(x, y)
-    N = np.sum(nn)
-    chi2 = (1.0/N)*np.sum((x[1,nn]-y[1,nn])**2 / (x[2,nn]**2+y[2,nn]**2))
-    return chi2
 
 
 def chifilter(rowstack, cutoff=1.2):

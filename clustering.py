@@ -6,35 +6,11 @@ import scipy.stats.distributions
 import scipy.special
 import temp_distance as dist # a fixed version of scipy.spatial.distance
 from sxsplots import plot_iq
-from biosxs_reduce import mean_stack, stack_datafiles, md5_file
+from biosxs_reduce import mean_stack, stack_datafiles, md5_file, get_subdists, chivectors
 from scipy.special import gammaln as gamln
 from scipy.io import loadmat
 from xformats.matformats import write_mat
 from xformats.yamlformats import write_ydat, read_ydat
-
-
-def clean_indices(x, y):
-    """Return indices which contain only good floats in x and y.
-    """
-    nn = np.logical_not(np.logical_or(
-        np.logical_or(np.isnan(x[1,:]), np.isnan(y[1,:])),
-        np.logical_or((x[2,:] <= 0.0), (y[2,:] <= 0.0))))
-    return nn
-
-
-def chivectors(x, y):
-    nn = clean_indices(x, y)
-    N = np.sum(nn)
-    chi2 = (1.0/N)*np.sum((x[1,nn]-y[1,nn])**2 / (x[2,nn]**2+y[2,nn]**2))
-    return chi2
-
-
-def plot_chidist(x, y):
-    nn = clean_indices(x, y)
-    N = np.sum(nn)
-    chi2 = (x[1,nn]-y[1,nn])**2 / (x[2,nn]**2+y[2,nn]**2)
-    plt.plot(chi2)
-    return chi2
 
 
 def filter_with_linkage(links, threshold=1.0):
@@ -51,17 +27,6 @@ def filter_with_linkage(links, threshold=1.0):
     return clusters
 
 
-def get_subdists(dmat, elist):
-    """Return distances of elems in `elist` from a dist. matrix `dmat`.
-    """
-    dists = []
-    Nel = len(elist)
-    for i in range(Nel):
-        for j in range(i+1, Nel):
-            dists.append(dmat[i, j])
-    return dists
-
-
 def plot_distmat(cdm):
     """Plot the condensed distance matrix `cdm`.
     """
@@ -71,6 +36,7 @@ def plot_distmat(cdm):
         dmat[i, i] = md
     plt.matshow(dmat, fignum=False)
     plt.colorbar()
+
 
 def plot_distmat_marginal(cdm):
     """Plot the condensed distance matrix `cdm` by summing over one index.

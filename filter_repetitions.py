@@ -4,23 +4,7 @@ import matplotlib.pyplot as plt
 from xformats.yamlformats import read_yaml, write_yaml, read_ydat, write_ydat
 from scipy.io.matlab.mio import loadmat
 from sxsplots import plot_iq
-from biosxs_reduce import stack_datafiles
-
-
-def clean_indices(x, y):
-    """Return indices which contain only good floats in x and y.
-    """
-    nn = np.logical_not(np.logical_or(
-        np.logical_or(np.isnan(x[1,:]), np.isnan(y[1,:])),
-        np.logical_or((x[2,:] <= 0.0), (y[2,:] <= 0.0))))
-    return nn
-
-
-def chivectors(x, y):
-    nn = clean_indices(x, y)
-    N = np.sum(nn)
-    chi2 = (1.0/N)*np.sum((x[1,nn]-y[1,nn])**2 / (x[2,nn]**2+y[2,nn]**2))
-    return chi2
+from biosxs_reduce import stack_datafiles, chivectors
 
 
 def incmap_to_strings(incmap):
