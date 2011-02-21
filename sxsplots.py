@@ -93,8 +93,7 @@ def plot_iq(ax, dat, err=1, smerr=0, **kwargs):
     y[y == 0.0] = okmin
     savehold = ax.ishold()
     ax.hold(1)
-    ax.semilogy(x, np.abs(y), '-', **kwargs)
-    ax.semilogy(x[markind], np.abs(y[markind]), 'o')
+    bandlabel = ''
     if(err and dat.shape[1] > 2):
         yerr = np.abs(dat[inds,2])
         minerr = y-yerr
@@ -102,11 +101,20 @@ def plot_iq(ax, dat, err=1, smerr=0, **kwargs):
         if smerr:
             minerr = spsmooth(x, minerr, yerr)
             maxerr = spsmooth(x, maxerr, yerr)
+            outofband_ratio = (1.0*np.sum(y > maxerr)+np.sum(y < minerr))/len(y)
+            bandlabel = "oob %d%%" % int(100*outofband_ratio)
         minerr[minerr < okmin] = okmin
         maxerr[maxerr < okmin] = okmin
-        ax.fill_between(x, minerr, maxerr, alpha=0.1, linewidth=0)
+        ax.fill_between(x, minerr, maxerr, alpha=0.1, linewidth=0, label=bandlabel)
+#    if kwargs.has_key('label'):
+#        label = kwargs.pop('label') + ' | ' + bandlabel
+#    else:
+#        label = bandlabel
+    label = kwargs.pop('label', '')
+    ax.semilogy(x, np.abs(y), '-', label=label, **kwargs)
+    ax.semilogy(x[markind], np.abs(y[markind]), 'o')
     ax.set_xlabel("q / (1/nm)")
     ax.set_ylabel("I")
-    if kwargs.has_key('label'):
+    if label:
         ax.legend()
     ax.hold(savehold)
