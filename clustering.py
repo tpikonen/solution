@@ -92,7 +92,7 @@ def plot_dendrogram(links, threshold=1.0):
     plt.axis((at[0], at[1], np.min(cchis) - delta, max(threshold, np.max(cchis)) + delta))
 
 
-def plot_repstats(filtered, first, aver, inclist, cdm, links, threshold):
+def plot_clustering(filtered, first, aver, inclist, cdm, links, threshold):
     plt.clf()
 
     plt.subplot(221)
@@ -116,8 +116,13 @@ def plot_repstats(filtered, first, aver, inclist, cdm, links, threshold):
     plt.show()
 
 
-def repstats(reps, threshold=1.0, plot=1):
-    """Return a cluster-filtered mean of repetitions in `reps`.
+def cluster_reps(reps, threshold=1.0, plot=1):
+    """Do clustering based `reps`.
+
+    Returns a tuple with
+    - The indlargest cluster found
+    - The condensed distance matrix
+    - Cluster linkage
 
     Keyword arguments:
         `threshold` : chisq threshold to use in discrimination.
@@ -131,7 +136,7 @@ def repstats(reps, threshold=1.0, plot=1):
         first = reps[0,...]
         aver = mean_stack(reps)
         filtered = mean_stack(reps[clist[0],...])
-        plot_repstats(filtered, first, aver, clist[0], cdm, links, threshold)
+        plot_clustering(filtered, first, aver, clist[0], cdm, links, threshold)
 
     return (clist[0], cdm, links)
 
@@ -161,7 +166,7 @@ def filter_stack(stack, threshold=1.0, plot=1):
     fil = np.zeros((sh[0], sh[2], sh[3]))
     for pos in range(sh[0]):
         print("Pos. %d" % pos)
-        fil[pos,...] = repstats(stack[pos,...], threshold, plot)
+        fil[pos,...] = cluster_reps(stack[pos,...], threshold, plot)
         plt.waitforbuttonpress()
     return fil
 
@@ -203,10 +208,7 @@ def average_positions(filenames, chi2cutoff=1.15, write=None):
     filenames.sort()
     stack = stack_datafiles(filenames)
 
-    incinds, cdm, links = repstats(stack, threshold=chi2cutoff)
-#    rinds, chis = filter_stack(stack, threshold=chi2cutoff)
-#    print(rinds)
-#    print(chis)
+    incinds, cdm, links = cluster_reps(stack, threshold=chi2cutoff)
     ms = mean_stack(stack[incinds,...])
 
     disinds = range(len(filenames))
