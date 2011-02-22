@@ -6,7 +6,7 @@ import scipy.stats.distributions
 import scipy.special
 import temp_distance as dist # a fixed version of scipy.spatial.distance
 from sxsplots import plot_iq
-from biosxs_reduce import mean_stack, stack_datafiles, md5_file, get_subdists, chivectors
+from biosxs_reduce import mean_stack, stack_datafiles, md5_file, chivectors
 from scipy.special import gammaln as gamln
 from scipy.io import loadmat
 from xformats.matformats import write_mat
@@ -63,14 +63,15 @@ def plot_clusterhist(cdm, cluster, N, threshold):
     plt.hold(1)
     nbins = 4*int(np.sqrt(len(cdm)))
     normed = False
-    _, bins, _ = plt.hist(cdm, bins=nbins, normed=normed, histtype='step', label='Full')
+    _, bins, _ = plt.hist(cdm, bins=nbins, normed=normed, histtype='bar', label='Full', color="blue")
     binw = bins[1] - bins[0]
     dmat = hc.distance.squareform(cdm)
-    dd = get_subdists(dmat, cluster)
-    plt.hist(dd, bins=bins, normed=normed, histtype='step', label="Cluster")
+    dd = hc.distance.squareform(dmat[cluster][:,cluster])
+    plt.hist(dd, bins=bins, normed=normed, histtype='bar', label="Cluster", color="green", rwidth=0.6)
     xx = np.linspace(min(0.8, np.min(bins)), max(1.2, np.max(bins)), 128)
     plt.plot(xx, binw*len(cdm)*chi2norm_pdf(xx, N), label="Chisq_%d full" % N)
     plt.plot(xx, binw*len(dd)*chi2norm_pdf(xx, N), label="Chisq_%d clus" % N)
+    plt.axvline(threshold, linestyle='--', color='magenta')
     plt.legend()
     plt.axis('tight')
 

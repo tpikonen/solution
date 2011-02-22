@@ -41,17 +41,6 @@ def chivectors(x, y):
     return chi2
 
 
-def get_subdists(dmat, elist):
-    """Return distances of elems in `elist` from a dist. matrix `dmat`.
-    """
-    dists = []
-    Nel = len(elist)
-    for i in range(Nel):
-        for j in range(i+1, Nel):
-            dists.append(dmat[i, j])
-    return dists
-
-
 def get_framefilename(conf, scanno, pointno, burstno):
     """Return the filename of a frame at a given scan, point, and burst number.
     """
