@@ -111,8 +111,8 @@ def plot_iq(ax, dat, err=1, smerr=0, **kwargs):
 #    else:
 #        label = bandlabel
     label = kwargs.pop('label', '')
-    ax.semilogy(x, np.abs(y), '-', label=label, **kwargs)
-    ax.semilogy(x[markind], np.abs(y[markind]), 'o')
+    line = ax.semilogy(x, np.abs(y), '-', label=label, **kwargs)[0]
+    ax.semilogy(x[markind], np.abs(y[markind]), 'o', color=line.get_color())
     ax.set_xlabel("q / (1/nm)")
     ax.set_ylabel("I")
     if label:
