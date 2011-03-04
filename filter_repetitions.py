@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from xformats.yamlformats import read_yaml, write_yaml, read_ydat, write_ydat
 from scipy.io.matlab.mio import loadmat
 from sxsplots import plot_iq
-from biosxs_reduce import stack_datafiles, chivectors
+from biosxs_reduce import stack_datafiles, chivectors, mean_stack
 
 
 def incmap_to_strings(incmap):
@@ -27,10 +27,10 @@ def strings_to_incmap(slist):
     return inds
 
 
-def write_filtered(avg, incmap, fname, first=None):
+def write_filtered(filtered, first, aver, incmap, fname):
     """Write an 'ydat' YAML file `fname` with filtered data and index array.
 
-    `avg` contains the filtered data, `incmap` the point by point inclusion
+    `filtered` contains the filtered data, `incmap` the point by point inclusion
     array (bool matrix) of points used in the averaging and `first` the
     data set used in comparison for the filtering.
     """
@@ -57,14 +57,12 @@ def write_filtered(avg, incmap, fname, first=None):
                 fp.write(']\n')
             i += 1
         addict = {}
-        if first is None:
-            write_ydat(avgind[0], fp, addict=addict)
-        else:
-            dat = np.zeros((5,avg.shape[1]))
-            dat[0:3,:] = avg
-            dat[3:5,:] = first[1:3,:]
-            cols = ['q', 'I', 'Ierr', 'I_first', 'Ierr_first']
-            write_ydat(dat, fp, cols=cols, addict=addict)
+        outarr = np.zeros((7, filtered.shape[1]))
+        outarr[0:3,:] = filtered
+        outarr[3:5,:] = first[1:3,:]
+        outarr[5:7,:] = aver[1:3,:]
+        cols = ['q', 'I', 'Ierr', 'I_first', 'Ierr_first', 'I_all', 'Ierr_all']
+        write_ydat(outarr, fp, cols=cols, addict=addict)
 
 
 def read_filtered(fname):
@@ -72,23 +70,30 @@ def read_filtered(fname):
     """
     dat, yd = read_ydat(fname, addict=1)
     first = None
-    if dat.shape[0] == 5:
+    aver = None
+    if dat.shape[0] >= 5:
         first = np.zeros((3, dat.shape[1]))
         first[0,:] = dat[0,:]
         first[1:3,:] = dat[3:5,:]
+    if dat.shape[0] >= 7:
+        aver = np.zeros((3, dat.shape[1]))
+        aver[0,:] = dat[0,:]
+        aver[1:3,:] = dat[5:7,:]
     incmap = strings_to_incmap(yd['incmap']).T
-    return (dat[0:3,:], incmap, first)
+    return (dat[0:3,:], first, aver, incmap)
 
 
-def plot_filtered(avg, incmap, first=None, figno=666, err=1, smerr=1):
+def plot_filtered(filt, first, aver, incmap, figno=666, err=1, smerr=1):
     plt.figure(figno)
     plt.clf()
     plt.axes([0.1, 0.3, 0.8, 0.65])
     plt.hold(1)
     ax = plt.gca()
-    if first is not None:
-        plot_iq(ax, first.T, err=err, smerr=smerr)
-    plot_iq(ax, avg.T, err=err, smerr=smerr)
+    plot_iq(ax, first.T, smerr=smerr, label="First rep")
+    plot_iq(ax, aver.T, smerr=smerr, label="All reps")
+    plot_iq(ax, filt.T, smerr=smerr, label="Filtered")
+    plt.legend()
+
     plt.axis('tight')
     plt.axes([0.1, 0.05, 0.8, 0.15])
     plt.imshow(incmap, interpolation='nearest', aspect='auto')
@@ -122,35 +127,37 @@ def chifilter_points(reps, chi2cutoff=1.1, winhw=25, plot=0):
         return chi2 < chi2cutoff
     first = reps[0,...]
     for rep in range(1,nreps):
-        for qind in range(qlen-20):
+        for qind in range(qlen):
             incmap[rep,qind] = chi2wfilt(first, reps[rep,...], qind)
 
-    avg = np.zeros((3, qlen))
-    avg[0,:] = first[0,:]
+    filt = np.zeros((3, qlen))
+    filt[0,:] = first[0,:]
     def sumsq(x): return np.sum(np.square(x))
     for qind in range(qlen):
-        avg[1,qind] = np.mean(reps[incmap[:,qind], 1, qind])
+        filt[1,qind] = np.mean(reps[incmap[:,qind], 1, qind])
         N = np.sum(incmap[:,qind])
         prop = np.sqrt(sumsq(reps[incmap[:,qind], 2, qind])) / N
 #        sdev = np.std(reps[incmap[:,qind], 2, qind]) / np.sqrt(N)
-#        avg[2,qind] = max(prop, sdev)
-        avg[2,qind] = prop
+#        filt[2,qind] = max(prop, sdev)
+        filt[2,qind] = prop
 
     if plot:
-        plot_filtered(avg, incmap, first, figno=plot)
+        aver = mean_stack(reps)
+        plot_filtered(filt, first, aver, incmap, figno=plot)
 
-    return (avg, incmap)
+    return (filt, incmap)
 
 
 def run_filter_on_stacks(filelist):
     for fname in filelist:
-        varname = fname[:-4]
+        varname = fname[:(fname.find('.mat'))]
         stack = loadmat(fname)[varname]
         for pos in range(stack.shape[0]):
             print("File: %s, pos %d" % (fname, pos))
             sys.stdout.flush()
             first = stack[pos,0,...]
-            avg, inds = chifilter_points(stack[pos,...])
+            aver = mean_stack(stack[pos,...])
+            filt, inds = chifilter_points(stack[pos,...])
             outname = "%s_p%d.yfil" % (varname, pos)
-            write_filtered(avg, inds, outname, first=first)
+            write_filtered(filt, first, aver, inds, outname)
             print(outname)
