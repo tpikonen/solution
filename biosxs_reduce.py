@@ -34,7 +34,18 @@ def clean_indices(x, y):
     return nn
 
 
+def chimodel(model, data):
+    """Return the chi-squared between model (errors ignored) and data."""
+    x = model
+    y = data
+    nn = clean_indices(x, y)
+    N = np.sum(nn)
+    chi2 = (1.0/N)*np.sum((x[1,nn]-y[1,nn])**2 / y[2,nn]**2)
+    return chi2
+
+
 def chivectors(x, y):
+    """Return the chi-squared between two experimental data with errors."""
     nn = clean_indices(x, y)
     N = np.sum(nn)
     chi2 = (1.0/N)*np.sum((x[1,nn]-y[1,nn])**2 / (x[2,nn]**2+y[2,nn]**2))
