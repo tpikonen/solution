@@ -125,6 +125,13 @@ def filter_matfile(fname, outstem, p_reject=0.001, plot=1):
             'method' : "filter_outliers",
             'inputfile' : [ fname, md5 ],
             'inputindex' : int(pos),
+            'q~unit' : '1/nm',
+            'I~unit' : 'arb.',
+            'Ierr~unit' : 'arb.',
+            'I_first~unit' : 'arb.',
+            'Ierr_first~unit' : 'arb.',
+            'I_all~unit' : 'arb.',
+            'Ierr_all~unit' : 'arb.',
             }
         outarr = np.zeros((7, ms.shape[1]))
         outarr[0:3,:] = ms
@@ -133,5 +140,7 @@ def filter_matfile(fname, outstem, p_reject=0.001, plot=1):
 
         outname = "%s%02d.yfil" % (outstem, pos)
         print(outname)
-        write_ydat(outarr, outname, addict=ad, cols=['q', 'I', 'Ierr', 'I_first', 'Ierr_first', 'I_all', 'Ierr_all'])
+        write_ydat(outarr, outname, addict=ad,
+            cols=['q','I','Ierr','I_first','Ierr_first','I_all','Ierr_all'],
+            attributes=['~unit'])
 
