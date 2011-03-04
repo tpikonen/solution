@@ -38,19 +38,35 @@ def plot_distmat(cdm):
     plt.colorbar()
 
 
-def plot_distmat_marginal(cdm):
+def plot_distmat_marginal(cdm, threshold=None, sublist=None):
     """Plot the condensed distance matrix `cdm` by summing over one index.
+
+    If `sublist` is given, also plot the sub-distance matrix for the
+    elements given in it.
     """
     dmat = squareform(cdm)
     for i in range(dmat.shape[0]):
         dmat[i,i] = 0.0
     bardat = np.max(dmat, axis=0)
-#    bardat = np.mean(dmat, axis=0)
-    plt.bar(np.arange(dmat.shape[0]) - 0.4, bardat, width=0.8)
-    plt.title("Mean(chisq)")
-    delta = (np.max(bardat) - np.min(bardat)) / 5.0
+    plt.bar(np.arange(dmat.shape[0]) - 0.4, bardat, width=0.6)
+    if sublist is not None:
+        subarr = np.array(sublist)
+        subarr.sort()
+        subdmat = dmat[subarr][:, subarr]
+        subdat = np.max(subdmat, axis=0)
+        plt.bar(subarr - 0.2, subdat, width=0.6, color='red')
+        bardat = np.concatenate((bardat, subdat))
+    barmin = np.min(bardat)
+    barmax = np.max(bardat)
+    if threshold:
+        plt.axhline(threshold, linestyle='--', color='magenta', label="Threshold = %0.3g" % threshold)
+        plt.legend()
+    else:
+        threshold = barmin
+    delta = (barmax - barmin) / 5.0
     xs = 0.5
-    ax = [-xs, dmat.shape[0]-xs, np.min(bardat)-delta, np.max(bardat)+delta]
+    ax = [-xs, dmat.shape[0]-xs, min(threshold, barmin)-delta,
+        max(threshold, barmax)+delta]
     ax = plt.axis(ax)
 
 
