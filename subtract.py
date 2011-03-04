@@ -8,7 +8,7 @@ from biosxs_reduce import read_experiment_conf, errsubtract
 def get_buf(indir, scanno, posno):
     """Read buffer SAXS curve from an ydat-file.
     """
-    fname = indir + "/bufs%02d_p%02d.yaml" % (scanno, posno)
+    fname = indir + "/bufs%02d_p%02d.yfil" % (scanno, posno)
     return read_ydat(fname)
 
 
@@ -44,7 +44,7 @@ def subtract_background(scanfile, conffile, indir, outdir):
 #            buf = bufstack[pos]
             for rep in range(nrep):
                 subs[pos,rep,...] = errsubtract(stack[pos,rep,...], buf)
-                subs[pos,rep,1:2,:] = subs[pos,rep,1:2,:] / conc
+                subs[pos,rep,1:3,:] = subs[pos,rep,1:3,:] / conc
         outname = "subs%02d" % scanno
         savemat(outdir+'/'+outname + ".mat", {outname: subs}, do_compression=1)
 
