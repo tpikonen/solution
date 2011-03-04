@@ -4,9 +4,9 @@ import matplotlib.pyplot as plt
 import scipy.cluster.hierarchy as hc
 import scipy.stats.distributions
 import scipy.special
-import temp_distance as dist # a fixed version of scipy.spatial.distance
+from scipy.spatial.distance import squareform
 from sxsplots import plot_iq
-from biosxs_reduce import mean_stack, stack_datafiles, md5_file, chivectors
+from biosxs_reduce import mean_stack, stack_datafiles, md5_file, chivectors, chi2cdm
 from scipy.special import gammaln as gamln
 from scipy.io import loadmat
 from xformats.matformats import write_mat
@@ -30,7 +30,7 @@ def filter_with_linkage(links, threshold=1.0):
 def plot_distmat(cdm):
     """Plot the condensed distance matrix `cdm`.
     """
-    dmat = hc.distance.squareform(cdm)
+    dmat = squareform(cdm)
     md = np.mean(cdm)
     for i in range(dmat.shape[0]):
         dmat[i, i] = md
@@ -41,7 +41,7 @@ def plot_distmat(cdm):
 def plot_distmat_marginal(cdm):
     """Plot the condensed distance matrix `cdm` by summing over one index.
     """
-    dmat = hc.distance.squareform(cdm)
+    dmat = squareform(cdm)
     for i in range(dmat.shape[0]):
         dmat[i,i] = 0.0
     bardat = np.max(dmat, axis=0)
@@ -65,8 +65,8 @@ def plot_clusterhist(cdm, cluster, N, threshold):
     normed = False
     _, bins, _ = plt.hist(cdm, bins=nbins, normed=normed, histtype='bar', label='Full', color="blue")
     binw = bins[1] - bins[0]
-    dmat = hc.distance.squareform(cdm)
-    dd = hc.distance.squareform(dmat[cluster][:,cluster])
+    dmat = squareform(cdm)
+    dd = squareform(dmat[cluster][:,cluster])
     plt.hist(dd, bins=bins, normed=normed, histtype='bar', label="Cluster", color="green", rwidth=0.6)
     xx = np.linspace(min(0.8, np.min(bins)), max(1.2, np.max(bins)), 128)
     plt.plot(xx, binw*len(cdm)*chi2norm_pdf(xx, N), label="Chisq_%d full" % N)
@@ -128,7 +128,7 @@ def cluster_reps(reps, threshold=1.0, plot=1):
         `threshold` : chisq threshold to use in discrimination.
         `plot` : Plot results, if True.
     """
-    cdm = distmat_reps(reps)
+    cdm = chi2cdm(reps)
     links = hc.linkage(cdm, method='complete')
     clist = filter_with_linkage(links, threshold)
     print("Clusters: %s" % str(clist))
@@ -152,12 +152,6 @@ def chi2norm_pdf(x, k):
         return np.exp((df/2.-1)*np.log(x+1e-300) - x/2. - gamln(df/2.) - (np.log(2)*df)/2.)
     #return k*scipy.stats.distributions.chi2.pdf(k*x, k)
     return k*chi2_pdf(k*x, k)
-
-
-def distmat_reps(reps):
-    """Return a condensed chi**2 distance matrix from `reps`.
-    """
-    return dist.pdist(reps, metric=chivectors)
 
 
 def filter_stack(stack, threshold=1.0, plot=1):
@@ -246,7 +240,7 @@ def test(threshold=1.1):
     asma[:,2,:] = rerr*np.ones_like(nn)
     asma[0,1,:] = asma[0,1,:] + 0.4 * rerr
     asma[29,1,:] = asma[29,1,:] - 0.4 * rerr
-    dmc = distmat_reps(asma)
+    dmc = chi2cdm(asma)
 #    links = hc.linkage(dmc)
 #    cc = hc.fcluster(links, threshold)
 #    print(cc)

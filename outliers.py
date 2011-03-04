@@ -1,11 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import temp_distance as dist # a fixed version of scipy.spatial.distance
 from scipy.stats.distributions import chi2
+from scipy.spatial.distance import squareform
 from xformats.yamlformats import read_ydat, write_ydat
 from xformats.matformats import read_mat
 from sxsplots import plot_iq
-from biosxs_reduce import chivectors, mean_stack, md5_file
+from biosxs_reduce import chivectors, chi2cdm, mean_stack, md5_file
 from clustering import plot_distmat, plot_distmat_marginal, plot_clusterhist
 
 
@@ -66,8 +66,8 @@ def filter_outliers(reps, threshold=1.0, plot=1):
     point is removed.
     """
     N = reps.shape[0]
-    cdm = dist.pdist(reps, metric=chivectors)
-    dmat = dist.squareform(cdm)
+    cdm = chi2cdm(reps)
+    dmat = squareform(cdm)
     db = dmat > threshold
     dbelow = dmat.copy()
     dbelow[db] = 0.0

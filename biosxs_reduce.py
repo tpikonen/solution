@@ -52,6 +52,24 @@ def chivectors(x, y):
     return chi2
 
 
+def chi2cdm(X):
+    """Return the pairwise chi-squared distance between observations in `X`.
+
+    The return value is a condensed distance matrix. Use
+    scipy.spatial.distance.squareform() to convert to a square distance
+    matrix. 
+    """
+    m = X.shape[0]
+    dm = np.zeros((m * (m - 1) / 2,), dtype=np.double)
+    k = 0
+    for i in xrange(0, m - 1):
+        for j in xrange(i+1, m):
+            dm[k] = chivectors(X[i], X[j])
+            k = k + 1
+
+    return dm
+
+
 def get_framefilename(conf, scanno, pointno, burstno):
     """Return the filename of a frame at a given scan, point, and burst number.
     """
