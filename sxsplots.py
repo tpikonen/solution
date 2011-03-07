@@ -72,7 +72,7 @@ def plot_pr(ax, g):
     savehold = ax.ishold()
     ax.hold(1)
     ax.plot(prf[:,0], prf[:,1]/nconst, label=lstr)
-    ax.plot([0.0, prf[:,0].max()], [0.0, 0.0])
+    ax.axhline(0.0, linewidth=0.4, color='black')
     ax.hold(savehold)
 
 
