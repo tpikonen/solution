@@ -15,14 +15,14 @@ def main():
         action="store_false", dest="smerr", default=True,
         help="Do not smooth errorbands")
 
-    (opts, args) = oprs.parse_args()
+    opts, args = oprs.parse_args()
     if(len(args) < 1):
         oprs.error("Input file argument required.")
     if(len(args) > 1):
         oprs.error("Only one input file accepted.")
 
-    (dat, inds, first) = read_filtered(args[0])
-    plot_filtered(dat, inds, first, 1, opts.err, opts.smerr)
+    filt, first, aver, incmap = read_filtered(args[0])
+    plot_filtered(filt, first, aver, incmap, opts.err, opts.smerr)
 
 
 if __name__ == "__main__":
