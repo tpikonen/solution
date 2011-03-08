@@ -11,6 +11,18 @@ description="Plot GNOM output files."
 usage="%prog <gnomfile1.out> <gnomfile2.out> ..."
 
 
+def gen_basename(name):
+    """Like os.path.basename, but works with both unix and windows filenames.
+    """
+    namenix = name.rpartition('/')[2]
+    namewin = name.rpartition('\\')[2]
+    if len(namenix) < len(namewin):
+        lname = namenix
+    else:
+        lname = namewin
+    return lname
+
+
 def main():
     oprs = OptionParser(usage=usage, description=description)
     oprs.add_option("-n", "--no-errors",
@@ -35,9 +47,9 @@ def main():
     plt.rcParams['legend.fontsize'] = 8.0
     ax1 = fig.add_subplot(1,2,1)
     ax1.set_position([0.08, 0.1, 0.4, 0.8])
-    for i in range(0, len(gnoms)):
-        g = gnoms[i]
-        lstr = g['filename'].rpartition('/')[2] + ", Rg=%g+-%g, I(0)=%g+-%g" % (g['Rg_real'], g['Rg_err_real'], g['I0_real'], g['I0_err_real'])
+    for g in gnoms:
+        g['filename'] = gen_basename(g['filename'])
+        lstr = g['filename'] + ", Rg=%g+-%g, I(0)=%g+-%g" % (g['Rg_real'], g['Rg_err_real'], g['I0_real'], g['I0_err_real'])
         plot_iq(ax1, g['Ireg'], label=lstr)
         if opts.expdata:
             plot_iq(ax1, g['Iexp'], err=opts.err, smerr=opts.smerr)
@@ -46,8 +58,7 @@ def main():
     ax1.legend()
     ax2 = fig.add_subplot(1,2,2)
     ax2.set_position([0.57, 0.1, 0.4, 0.8])
-    for i in range(0, len(gnoms)):
-        g = gnoms[i]
+    for g in gnoms:
         plot_pr(ax2, g)
     ax2.legend()
     ax2.set_xlabel("r / nm")
