@@ -176,13 +176,19 @@ def write_pnglog(a, fname):
     fp.close()
 
 
-def read_eiger(fname):
+def read_eiger(fname, imno=None):
     """Read the HDF5 output of the Eiger prototype module at cSAXS.
+
+    If an integer keyword argument `imno` is given, return only a single
+    frame at that given index. Otherwise return the full image stack.
     """
     import h5py
     f = h5py.File(fname, "r")
     d = det_struct()
-    d.im = np.array(f['eh5']['images']).squeeze()
+    if imno:
+        d.im = np.array(f['eh5']['images'][imno])
+    else:
+        d.im = np.array(f['eh5']['images']).squeeze()
     return d
 
 
