@@ -51,7 +51,7 @@ def read_ydat(fname, addict=False):
         return yarr.squeeze()
 
 
-def write_ydat(arr, ff, cols=['q', 'I', 'Ierr'], addict={}):
+def write_ydat(arr, ff, cols=['q', 'I', 'Ierr'], addict={}, attributes=[]):
     """Write a rank-2 array `arr` to YAML-dat file `ff`.
 
     `ff` can be a file name or a stream.
@@ -64,7 +64,7 @@ def write_ydat(arr, ff, cols=['q', 'I', 'Ierr'], addict={}):
     Keyword argument `addict` can contain an additional dictionary which is
         added to the output yaml dictionary.
     """
-    def write_ydat_fp(fp, arr, cols, addict):
+    def write_ydat_fp(fp, arr, cols, addict, attributes):
         if arr.shape[0] != len(cols) and arr.shape[0] > 3 and arr.shape[1] <= 3:
             arr = arr.T
         if arr.shape[0] > len(cols):
@@ -72,14 +72,14 @@ def write_ydat(arr, ff, cols=['q', 'I', 'Ierr'], addict={}):
         outdic = addict
         for i in range(arr.shape[0]):
             outdic[cols[i]] = map(float, list(arr[i, :]))
-        ld = loopyaml.Loopdict(outdic, loopvars=cols[:arr.shape[0]])
+        ld = loopyaml.Loopdict(outdic, loopvars=cols[:arr.shape[0]], attributes=attributes)
         write_yaml(ld, fp)
 
     if hasattr(ff, 'write'):
-        write_ydat_fp(ff, arr, cols, addict)
+        write_ydat_fp(ff, arr, cols, addict, attributes)
     else:
         with open(ff, "w") as fp:
-            write_ydat_fp(fp, arr, cols, addict)
+            write_ydat_fp(fp, arr, cols, addict, attributes)
 
 
 def write_ystack(stack, fname, addict={}):
