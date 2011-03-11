@@ -22,6 +22,15 @@ def write_yaml(o, ff, **kwargs):
             loopyaml.dump(o, fp, **kwargs)
 
 
+def read_loopyaml(fname):
+    """Read a looped YAML structure from a given file and return it."""
+    with open(fname, 'r') as f:
+        d = loopyaml.load(f)
+    return d
+
+
+write_loopyaml = write_yaml
+
 def read_ydat(fname, addict=False):
     """Return a (N, ncols) numpy array read from a 'YAML-dat' (or ydat) file.
 
