@@ -38,14 +38,14 @@ def read_ydat(fname, addict=False):
     in an (array, dict) tuple.
     """
     yd = read_yaml(fname)
-    ncols = len(yd['=cols'])
-    P = len(yd['=loop'])
+    ncols = len(yd['=loops='][0]['$cols'])
+    P = len(yd['=loops='][0]['~vals'])
     assert((P % ncols ) == 0)
-    yarr = np.array(yd['=loop']).reshape((P / ncols, ncols)).T
+    yarr = np.array(yd['=loops='][0]['~vals']).reshape((P / ncols, ncols)).T
     # FIXME: Assumes that the columns are in a 'canonical' order [q, I, Ierr]
+    # FIXME: What to do with the rest of the '=loops=' list values?
     if addict:
-        yd.pop('=cols')
-        yd.pop('=loop')
+        yd.pop('=loops=')
         return (yarr.squeeze(), yd)
     else:
         return yarr.squeeze()
