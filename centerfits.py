@@ -7,7 +7,7 @@ import scipy.interpolate as ip
 import matplotlib.pyplot as plt
 import radbin as c
 from sxsplots import logshow
-from xformats.detformats import read_cbf, read_mask
+from xformats.detformats import read_cbf, read_eiger, read_mask
 from optparse import OptionParser
 
 usage="%prog agbeh.cbf [agbeh2.cbf ...]"
@@ -394,6 +394,9 @@ def main():
         action="store", type="string", dest="maskfile", default=None)
     oprs.add_option("-c", "--center",
         action="store", type="string", dest="inicen_str", default=None)
+    oprs.add_option("-e", "--eiger",
+        action="store_true", dest="eiger", default=False,
+        help="Process Eiger frames.")
     (opts, args) = oprs.parse_args()
 
     inicen = None
@@ -415,9 +418,13 @@ def main():
 
     init_func = centerfit_1dsymmetry
     refine_func = centerfit_sectors
+    if opts.eiger:
+        read_fun = read_eiger
+    else:
+        read_fun = read_cbf
 
     cens = np.zeros((len(args), 2))
-    agbe = read_cbf(args[0])
+    agbe = read_fun(args[0])
     print(args[0])
     if inicen is None:
         startcen = init_func(agbe.im, mask=mask)
@@ -425,7 +432,7 @@ def main():
         startcen = inicen
     print(startcen)
     for i in range(0, len(args)):
-        agbe = read_cbf(args[i])
+        agbe = read_fun(args[i])
         center = refine_func(agbe.im, startcen=startcen, plotit=(not opts.noplot), mask=mask)
         print(center.__repr__())
         cens[i,:] = center
