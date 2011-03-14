@@ -190,7 +190,7 @@ def find_bad_pixels(files, hot_threshold=np.inf, var_factor=5.0, chipgaps=False)
     modules = match_shape_to_pilatus(s)
     if modules is None:
         warnings.warn("Frame shape does not match any Pilatus. Not using a gap mask.")
-        a_gaps = np.zeros(s)
+        a_gaps = np.zeros(s, dtype=np.bool)
     else:
         a_gaps = np.logical_not(pilatus_gapmask(modules, chipgaps=chipgaps))
     # Boolean arrays of various invalid pixels (logical_not of a mask!)
