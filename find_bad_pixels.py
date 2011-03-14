@@ -1,7 +1,7 @@
 import warnings, scipy.signal
 import numpy as np
 import numpy.ma as ma
-from xformats.detformats import read_cbf, write_pnglog
+from xformats.detformats import read_cbf, read_eiger, write_pnglog
 from optparse import OptionParser
 
 description="Write a bad pixel mask based on analysis of a series of input frames"
@@ -165,7 +165,7 @@ def bool_sub(A, B):
     return np.logical_and(A, np.logical_not(B))
 
 
-def find_bad_pixels(files, hot_threshold=np.inf, var_factor=5.0, chipgaps=False):
+def find_bad_pixels(files, hot_threshold=np.inf, var_factor=5.0, chipgaps=False, read_fun=read_cbf):
     """Return a mask where pixels determined as dead or hot are masked."""
 
     # Reject pixel if the sum of this pixel in all frames is less than this
@@ -185,7 +185,7 @@ def find_bad_pixels(files, hot_threshold=np.inf, var_factor=5.0, chipgaps=False)
     laplace = np.ones((3,3), dtype=np.float64)
     laplace[1,1] = -8.0
 
-    f0 = read_cbf(files[0])
+    f0 = read_fun(files[0])
     s = f0.im.shape
     modules = match_shape_to_pilatus(s)
     if modules is None:
@@ -204,7 +204,7 @@ def find_bad_pixels(files, hot_threshold=np.inf, var_factor=5.0, chipgaps=False)
     Asum = np.zeros((s[0], s[1]), dtype=np.float64)
     Asumsq = np.zeros((s[0], s[1]), dtype=np.float64)
     for i in range(0,len(files)):
-        tim = (read_cbf(files[i])).im.astype(np.float64)
+        tim = (read_fun(files[i])).im.astype(np.float64)
         Asum += tim
         Asumsq += tim**2.0
         a_hots = bool_add(a_hots, (tim > hot_threshold))
@@ -258,6 +258,9 @@ def main():
     oprs.add_option("-c", "--chipgaps",
         action="store_true", dest="chipgaps", default=False,
         help="Mask also chip gaps in addition to module gaps")
+    oprs.add_option("-e", "--eiger",
+        action="store_true", dest="eiger", default=False,
+        help="Process Eiger frames.")
     (opts, args) = oprs.parse_args()
 
     files = []
@@ -278,8 +281,13 @@ def main():
         print >> sys.stderr, "Output file name is missing"
         sys.exit(1)
 
+    if opts.eiger:
+        read_fun = read_eiger
+    else:
+        read_fun = read_cbf
+
     mask = find_bad_pixels(files, hot_threshold=opts.hot_threshold,
-                            chipgaps=opts.chipgaps)
+                            chipgaps=opts.chipgaps, read_fun=read_fun)
     write_pnglog(mask, outfile)
 
 
