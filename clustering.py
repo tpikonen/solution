@@ -5,12 +5,21 @@ import scipy.cluster.hierarchy as hc
 import scipy.stats.distributions
 import scipy.special
 from scipy.spatial.distance import squareform
+from optparse import OptionParser
 from sxsplots import plot_iq
 from biosxs_reduce import mean_stack, stack_datafiles, md5_file, chivectors, chi2cdm
 from scipy.special import gammaln as gamln
 from scipy.io import loadmat
 from xformats.matformats import write_mat
 from xformats.yamlformats import write_ydat, read_ydat
+
+description="""\
+Filter repeats by linkage-based clustering.
+"""
+
+usage="%prog file1.yfil file2.yfil ... "
+
+default_chi2 = 2.2
 
 
 def filter_with_linkage(links, threshold=1.0):
@@ -114,13 +123,14 @@ def plot_clustering(filtered, first, aver, inclist, cdm, links, threshold):
     plt.subplot(221)
     sm = 1
     ax = plt.gca()
-    plot_iq(ax, first.T, smerr=sm, label="First rep")
-    plot_iq(ax, aver.T, smerr=sm, label="All reps")
-    plot_iq(ax, filtered.T, smerr=sm, label="Largest cluster, %d reps" % len(inclist))
+    plot_iq(ax, first.T, smerr=sm, label="First rep", color='blue')
+    plot_iq(ax, aver.T, smerr=sm, label="All reps", color='red')
+    plot_iq(ax, filtered.T, smerr=sm, label="Largest cluster, %d reps" % len(inclist), color='lawngreen')
     plt.legend()
 
     plt.subplot(222)
     plot_distmat(cdm)
+#    plot_distmat_marginal(cdm)
 
     plt.subplot(223)
     N = filtered.shape[-1]
@@ -136,7 +146,7 @@ def cluster_reps(reps, threshold=1.0, plot=1):
     """Do clustering based `reps`.
 
     Returns a tuple with
-    - The indlargest cluster found
+    - The indices of the largest cluster found
     - The condensed distance matrix
     - Cluster linkage
 
@@ -211,7 +221,7 @@ def read_clustered(fname):
 
 
 # FIXME: Determine the cutoff chi2 automatically from the CDM
-def average_positions(filenames, chi2cutoff=1.15, write=None):
+def average_positions(filenames, chi2cutoff=1.15, write=True):
     """Filter and average over positions in a capillary.
 
     """
@@ -240,8 +250,10 @@ def average_positions(filenames, chi2cutoff=1.15, write=None):
     outarr[3:5,:] = stack[0,1:3,:]
     outarr[5:7,:] = mean_stack(stack)[1:3,:]
 
-    if write is not None:
-        fname = write
+    if write:
+        fname = filenames[0]
+        fname = "%s_clu.ydat" % fname[:(fname.find('_p'))]
+        print(fname)
         write_ydat(outarr, fname, addict=ad, cols=['q', 'I', 'Ierr', 'I_first', 'Ierr_first', 'I_all', 'Ierr_all'])
     return ms
 
@@ -262,3 +274,17 @@ def test(threshold=1.1):
 #    print(cc)
     plot_average(asma[0,...], asma[1,...], dmc, threshold)
 #    return links
+
+
+def main():
+    oprs = OptionParser(usage=usage, description=description)
+    oprs.add_option("-c", "--chisq-threshold",
+        action="store", type="float", dest="threshold", default=default_chi2,
+        help="chi-squared threshold for cluster splitting. Default is %3g" % default_chi2)
+    (opts, args) = oprs.parse_args()
+    if len(args) < 1:
+        oprs.error("One or more input files needed.")
+    average_positions(args, chi2cutoff=opts.threshold, write=1)
+
+if __name__ == "__main__":
+    main()
