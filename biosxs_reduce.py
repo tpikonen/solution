@@ -3,7 +3,7 @@ import glob, re, os.path, sys, logging, hashlib
 import loopyaml
 import numpy as np
 import radbin as r
-from xformats.detformats import read_cbf, read_spec
+from xformats.detformats import read_cbf, read_eiger, read_spec
 from xformats.yamlformats import read_yaml, write_yaml, read_ydat, write_ydat
 from xformats.atsasformats import read_dat
 from xformats.matformats import read_matclean
@@ -17,6 +17,7 @@ def read_experiment_conf(fname):
     c = {}
     c['Basedir'] = yd['basedir']
     c['Pilatusdir'] = c['Basedir'] + yd['pilatusdir']
+    c['Eigerdir'] = c['Basedir'] + yd.get('eigerdir', '')
     c['Expno'] = int(yd['expno'])
     c['Detno'] = int(yd['detno'])
     c['Cbfext'] = yd['cbfext']
@@ -57,7 +58,7 @@ def chi2cdm(X):
 
     The return value is a condensed distance matrix. Use
     scipy.spatial.distance.squareform() to convert to a square distance
-    matrix. 
+    matrix.
     """
     m = X.shape[0]
     dm = np.zeros((m * (m - 1) / 2,), dtype=np.double)
@@ -78,10 +79,24 @@ def get_framefilename(conf, scanno, pointno, burstno):
     return fname
 
 
+def eiger_filename(conf, scanno, pointno, burstno):
+    """Return the filename of a frame at a given scan, point, and burst number.
+    """
+    c = conf
+    fname = "%s/S%05d/e%05d_%d_%05d_%05d_%05d.%s" % (c['Eigerdir'], scanno, c['Expno'], c['Detno'], scanno, pointno, burstno, "h5")
+    return fname
+
+
 def get_binned(indices, framefile):
     fr = read_cbf(framefile)
     stats = r.binstats(indices, fr.im, calculate=(1,0,0,1))
     return (stats[0], stats[3]) # Mean and Poisson count std of mean
+
+
+def eiger_binned(indices, framefile):
+    fr = read_eiger(framefile)
+    stats = r.binstats(indices, fr.im, calculate=(1,0,1,1))
+    return (stats[0], stats[2])
 
 
 def get_diode(specscans, scanno, pointno):
@@ -94,6 +109,18 @@ def get_diode(specscans, scanno, pointno):
     assert(scanno == scan['number'])
     diodeval = scan['counters']['diode'][pointno]
     return diodeval
+
+
+def get_dsum(specscans, scanno, pointno):
+    """Return dsum counts from a given scan and point.
+
+    Argument `specscans` is the list returned from Specparser.parse()['scans'].
+    Scan number `scanno` is indexed starting from 1, as in SPEC.
+    """
+    scan = specscans[scanno]
+    assert(scanno == scan['number'])
+    dval = scan['counters']['dSum'][pointno]
+    return dval
 
 
 def get_scanlen(specscans, scanno):
@@ -227,6 +254,43 @@ def filter_stack(stack, fnames, chi2cutoff=1.5):
     return outarr, diclist
 
 
+def stack_eiger(conf, scanno, specscans, radind, modulus=10):
+    """Return an array with 1D curves in different positions in a scan.
+
+    Argument `modulus` gives the number of unique positions in a scan.
+
+    Return value is an array with coordinates [posno, repno, q/I/err, data]
+    and shape (number_of_positions, number_of_repetitions, 3, len(q)).
+    """
+    q = radind['q']
+    scanlen = get_scanlen(specscans, scanno)
+    if (scanlen % modulus) != 0:
+        raise ValueError\
+            ("Number of points in a scan is not divisible by modulus.")
+
+    numreps = scanlen / modulus
+    stack = np.zeros((modulus, numreps, 3, len(q)))
+    fnames = [ [] for x in range(modulus) ]
+
+    for posno in range(modulus):
+        print("scan #%d, pos %d" % (scanno, posno))
+        sys.stdout.flush()
+        repno = 0
+        for pointno in range(posno, scanlen, modulus):
+            # Normalize dSum to average of 1.
+            dval = get_dsum(specscans, scanno, pointno) / 22450965
+            frname = eiger_filename(conf, scanno, pointno, 0)
+            (I, err) = eiger_binned(radind['indices'], frname)
+            stack[posno, repno, 0, :] = q
+            stack[posno, repno, 1, :] = I/dval
+            stack[posno, repno, 2, :] = err/dval
+            md5 = md5_file(frname)
+            fnames[posno].append((frname, md5))
+            repno = repno+1
+
+    return stack, fnames
+
+
 def stack_scan(conf, scanno, specscans, radind, modulus=10):
     """Return an array with 1D curves in different positions in a scan.
 
@@ -264,19 +328,21 @@ def stack_scan(conf, scanno, specscans, radind, modulus=10):
     return stack, fnames
 
 
-def stack_files(scanfile, conffile, outdir, modulus=10):
+def stack_files(scanfile, conffile, outdir, modulus=10, eiger=0):
     """Create stacks from scans read from `scanfile` and write the to files.
     """
     scans = read_yaml(scanfile)
     conf = read_experiment_conf(conffile)
-    specscans = read_spec(Specfile)
-    radind = read_matclean(Indfile)['radind']
-    print(Indfile)
+    specscans = read_spec(conf['Specfile'])
+    radind = read_matclean(conf['Indfile'])['radind']
     q = radind['q']
     scannos = scans.keys()
     scannos.sort()
     for scanno in scannos:
         outname = "s%02d" % scanno
-        stack, fnames = stack_scan(conf, scanno, specscans, radind, modulus)
+        if eiger:
+            stack, fnames = stack_eiger(conf, scanno, specscans, radind, modulus)
+        else:
+            stack, fnames = stack_scan(conf, scanno, specscans, radind, modulus)
         stack = stack.squeeze()
         savemat(outdir+'/'+outname + ".mat", {outname: stack}, do_compression=1)
