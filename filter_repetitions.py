@@ -1,10 +1,17 @@
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
+from optparse import OptionParser
 from xformats.yamlformats import read_yaml, write_yaml, read_ydat, write_ydat
 from scipy.io.matlab.mio import loadmat
 from sxsplots import plot_iq
 from biosxs_reduce import stack_datafiles, chivectors, mean_stack
+
+description="""\
+Filter repetitions by comparing to the first one.
+"""
+
+usage="%prog subs.mat [ subs2.mat ... ]"
 
 
 def incmap_to_strings(incmap):
@@ -161,3 +168,14 @@ def run_filter_on_stacks(filelist):
             outname = "%s_p%d.yfil" % (varname, pos)
             write_filtered(filt, first, aver, inds, outname)
             print(outname)
+
+
+def main():
+    oprs = OptionParser(usage=usage, description=description)
+    (opts, args) = oprs.parse_args()
+    if len(args) < 1:
+        oprs.error("One or more input files needed.")
+    run_filter_on_stacks(args)
+
+if __name__ == "__main__":
+    main()
