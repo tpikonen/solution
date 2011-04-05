@@ -138,7 +138,7 @@ def filter_matfile(fname, outstem, p_reject=0.001, plot=1):
         outarr[3:5,:] = reps[0,1:3,:]
         outarr[5:7,:] = mean_stack(reps)[1:3,:]
 
-        outname = "%s%02d.yfil" % (outstem, pos)
+        outname = "%s.p%02d.out.ydat" % (outstem, pos)
         print(outname)
         write_ydat(outarr, outname, addict=ad,
             cols=['q','I','Ierr','I_first','Ierr_first','I_all','Ierr_all'],
