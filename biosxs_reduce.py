@@ -196,64 +196,6 @@ def sum_stack(stack):
     return retval
 
 
-def chifilter(rowstack, cutoff=1.2):
-    """Filter observations by comparing to the first one in stack.
-
-    Returns a tuple (indices, chis). chis are the chi**2 values
-    between the first row in `rowstack` and the rest of the rows (chis[0]
-    is always 0.0). indices is a boolean index array. If row r has
-    chi^2 less than `cutoff`, then indices[r] == True.
-    First row is always included, i.e. indices[0] == True.
-
-    Argument `rowstack` should be an array of shape (M, 3, n), where
-    M is the number of observations (repeats, positions etc.) and
-    n is the number of points in a single observation.
-    """
-
-    ish = rowstack.shape
-    inds = np.zeros((ish[0]), dtype=np.bool)
-    inds[0] = True
-    chis = np.zeros((ish[0]))
-    first = rowstack[0, :, :]
-    for repno in range(1, ish[0]):
-        chi2 = chivectors(rowstack[repno, :, :], first)
-        chis[repno] = chi2
-        if chi2 < cutoff:
-            inds[repno] = True
-    return inds, chis
-
-
-def filter_stack(stack, fnames, chi2cutoff=1.5):
-    """Return the mean of stack over repetitions, discarding outliers.
-
-    Return value is an array with coordinates [posno, q/I/err, data].
-    """
-    ish = stack.shape
-    outarr = np.zeros((ish[0], ish[2], ish[3]))
-    diclist = []
-    for posno in range(ish[0]):
-        outdic = {"included": [], "discarded": [], "chi2cutoff": chi2cutoff}
-        rinds, chis = chifilter(stack[posno, ...], cutoff=chi2cutoff)
-        for repno in range(len(rinds)):
-            if not rinds[repno]:
-                logging.warning("posno: %d, rep: %d, chi2: %g > %g !"
-                    % (posno, repno, chis[repno], chi2cutoff))
-        outarr[posno, :, :] = mean_stack(stack[posno, rinds, :, :])
-        incinds = list(np.arange(ish[1])[rinds])
-        disinds = list(np.arange(ish[1])[np.logical_not(rinds)])
-        outdic['included'] = [ [os.path.basename(fnames[posno][ind][0]),
-            fnames[posno][ind][1], float(chis[ind])] for ind in incinds ]
-        outdic['discarded'] = [ [os.path.basename(fnames[posno][ind][0]),
-            fnames[posno][ind][1], float(chis[ind])] for ind in disinds ]
-        outdic['q'] = map(float, list(outarr[posno,0, :]))
-        outdic['I'] = map(float, list(outarr[posno,1, :]))
-        outdic['Ierr'] = map(float, list(outarr[posno,2, :]))
-        ld = loopyaml.Loopdict(outdic, loopvars=['q', 'I', 'Ierr'])
-        diclist.append(ld)
-
-    return outarr, diclist
-
-
 def stack_eiger(conf, scanno, specscans, radind, modulus=10):
     """Return an array with 1D curves in different positions in a scan.
 
