@@ -196,6 +196,30 @@ def sum_stack(stack):
     return retval
 
 
+def write_stack_ydat(fname, stack, fnames, dvals, conf):
+    """Write a single position from a stack to an .ydat file.
+    """
+    sh = stack.shape
+    outarr = np.zeros((2*sh[0]+1, sh[-1]))
+    outarr[0,:] = stack[0,0,:] # q
+    for pos in xrange(sh[0]):
+        outarr[2*pos+1,:] = stack[pos,1,:] # I
+        outarr[2*pos+2,:] = stack[pos,2,:] # Ierr
+    ad = {  'frames': list(fnames),
+            'transmissions': dvals,
+            'indfile': [ os.path.basename(conf['Indfile']),
+                        md5_file(conf['Indfile']) ],
+            'q~unit': '1/nm',
+        }
+    cols = ['q']
+    Icols = [ "I%02d" % n for n in range(len(fnames))]
+    errcols = [ "Ierr%02d" % n for n in range(len(fnames))]
+    cols.extend([ col for lsub in zip(Icols, errcols) for col in lsub ])
+    ad.update([ ("I%02d~unit" % n, "arb.") for n in range(len(fnames)) ])
+    ad.update([ ("Ierr%02d~unit" % n, "arb.") for n in range(len(fnames)) ])
+    write_ydat(outarr, fname, cols=cols, addict=ad, attributes=['~unit'])
+
+
 def stack_eiger(conf, scanno, specscans, radind, modulus=10):
     """Return an array with 1D curves in different positions in a scan.
 
@@ -253,6 +277,7 @@ def stack_scan(conf, scanno, specscans, radind, modulus=10):
     numreps = scanlen / modulus
     stack = np.zeros((modulus, numreps, 3, len(q)))
     fnames = [ [] for x in range(modulus) ]
+    dvals = [ [] for x in range(modulus) ]
 
     for posno in range(modulus):
         print("scan #%d, pos %d" % (scanno, posno))
@@ -267,13 +292,14 @@ def stack_scan(conf, scanno, specscans, radind, modulus=10):
             stack[posno, repno, 1, :] = I/dval
             stack[posno, repno, 2, :] = err/dval
             md5 = md5_file(frname)
-            fnames[posno].append((frname, md5))
+            fnames[posno].append([os.path.basename(frname), md5])
+            dvals[posno].append(dval)
             repno = repno+1
 
-    return stack, fnames
+    return stack, fnames, dvals
 
 
-def stack_files(scanfile, conffile, outdir, modulus=10, eiger=0):
+def stack_files(scanfile, conffile, outdir, modulus=10, eiger=0, matfile=1):
     """Create stacks from scans read from `scanfile` and write the to files.
     """
     if not os.path.isdir(outdir):
@@ -289,8 +315,16 @@ def stack_files(scanfile, conffile, outdir, modulus=10, eiger=0):
     for scanno in scannos:
         outname = "s%02d" % scanno
         if eiger:
-            stack, fnames = stack_eiger(conf, scanno, specscans, radind, modulus)
+            stack, fnames, dvals = \
+                stack_eiger(conf, scanno, specscans, radind, modulus)
         else:
-            stack, fnames = stack_scan(conf, scanno, specscans, radind, modulus)
+            stack, fnames, dvals = \
+                stack_scan(conf, scanno, specscans, radind, modulus)
         stack = stack.squeeze()
-        savemat(outdir+'/'+outname + ".mat", {outname: stack}, do_compression=1)
+        if matfile:
+            savemat(outdir+'/'+outname + ".mat", {outname: stack}, do_compression=1)
+        else:
+            for pos in range(stack.shape[0]):
+                outfname = outname+'.p%02d.all.ydat' % pos
+                write_stack_ydat(outdir+'/'+outfname, stack[pos], fnames[pos], dvals[pos], conf)
+                print("Wrote output to '%s'." % outfname)
