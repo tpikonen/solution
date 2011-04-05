@@ -1,9 +1,9 @@
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
-from optparse import OptionParser
+import optparse
 from xformats.yamlformats import read_yaml, write_yaml, read_ydat, write_ydat
-from scipy.io.matlab.mio import loadmat
+from xformats.matformats import read_mat
 from sxsplots import plot_iq
 from biosxs_reduce import stack_datafiles, chivectors, mean_stack
 
@@ -11,7 +11,7 @@ description="""\
 Filter repetitions by comparing to the first one.
 """
 
-usage="%prog subs.mat [ subs2.mat ... ]"
+usage="%prog [ scans.yaml | -m stack.mat [ stack2.mat ... ] ]"
 
 
 def incmap_to_strings(incmap):
@@ -155,27 +155,50 @@ def chifilter_points(reps, chi2cutoff=1.1, winhw=25, plot=0):
     return (filt, incmap)
 
 
-def run_filter_on_stacks(filelist):
-    for fname in filelist:
-        varname = fname[:(fname.find('.mat'))]
-        stack = loadmat(fname)[varname]
-        for pos in range(stack.shape[0]):
-            print("File: %s, pos %d" % (fname, pos))
-            sys.stdout.flush()
-            first = stack[pos,0,...]
-            aver = mean_stack(stack[pos,...])
-            filt, inds = chifilter_points(stack[pos,...])
-            outname = "%s_p%d.yfil" % (varname, pos)
-            write_filtered(filt, first, aver, inds, outname)
-            print(outname)
+
+def filter_matfile(fname, outstem):
+    stack = read_mat(fname)
+    for pos in range(stack.shape[0]):
+        print("File: %s, pos %d" % (fname, pos))
+        sys.stdout.flush()
+        first = stack[pos,0,...]
+        aver = mean_stack(stack[pos,...])
+        filt, inds = chifilter_points(stack[pos,...])
+        outname = "%s.p%02d.fil.ydat" % (outstem, pos)
+        write_filtered(filt, first, aver, inds, outname)
+        print(outname)
 
 
 def main():
-    oprs = OptionParser(usage=usage, description=description)
+    oprs = optparse.OptionParser(usage=usage, description=description)
+    oprs.add_option("-m", "--matfiles",
+        action="store_true", dest="matfiles", default=False,
+        help="Input arguments are matfiles instead of a YAML file.")
     (opts, args) = oprs.parse_args()
     if len(args) < 1:
         oprs.error("One or more input files needed.")
-    run_filter_on_stacks(args)
+
+    if opts.matfiles:
+        filenames = args
+        for fname in filenames:
+            outstem = "%s" % fname[:(fname.find('.mat'))]
+            filter_matfile(fname, outstem)
+    else:
+        if len(args) > 1:
+            oprs.error("Only one YAML scan list accepted.")
+        scans = read_yaml(args[0])
+        scannos = scans.keys()
+        scannos.sort()
+        for scanno in scannos:
+            try:
+                bufscan = scans[scanno][0]
+            except TypeError:
+                print("Scan #%03d is a buffer" % scanno)
+                continue
+            print("Scan #%03d" % scanno)
+            fname = "s%d.mat" % scanno
+            outstem = "%s" % fname[:(fname.find('.mat'))]
+            filter_matfile(fname, outstem)
 
 if __name__ == "__main__":
     main()
