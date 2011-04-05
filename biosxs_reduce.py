@@ -292,9 +292,12 @@ def stack_eiger(conf, scanno, specscans, radind, modulus=10):
 
 
 def stack_scan(conf, scanno, specscans, radind, modulus=10):
-    """Return an array with 1D curves in different positions in a scan.
+    """Return normalized 1D curves grouped by positions and repetitions.
 
     Argument `modulus` gives the number of unique positions in a scan.
+
+    The intensity (and it's error) values are normalized by the 'diode'
+    counter in `specscans`.
 
     Return value is an array with coordinates [posno, repno, q/I/err, data]
     and shape (number_of_positions, number_of_repetitions, 3, len(q)).
@@ -331,6 +334,9 @@ def stack_scan(conf, scanno, specscans, radind, modulus=10):
 def stack_files(scanfile, conffile, outdir, modulus=10, eiger=0):
     """Create stacks from scans read from `scanfile` and write the to files.
     """
+    if not os.path.isdir(outdir):
+        # FIXME: Create the directory
+        raise IOError("Output directory does not exist.")
     scans = read_yaml(scanfile)
     conf = read_experiment_conf(conffile)
     specscans = read_spec(conf['Specfile'])
