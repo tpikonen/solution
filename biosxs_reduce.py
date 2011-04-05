@@ -313,7 +313,7 @@ def stack_files(scanfile, conffile, outdir, modulus=10, eiger=0, matfile=1):
     scannos = scans.keys()
     scannos.sort()
     for scanno in scannos:
-        outname = "s%02d" % scanno
+        outname = "s%03d" % scanno
         if eiger:
             stack, fnames, dvals = \
                 stack_eiger(conf, scanno, specscans, radind, modulus)
