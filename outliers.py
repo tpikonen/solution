@@ -124,7 +124,7 @@ def filter_matfile(fname, outstem, p_reject=0.001, plot=1):
             'chi2matrix' : map(float, list(cdm)),
             'method' : "filter_outliers",
             'inputfile' : [ fname, md5 ],
-            'inputindex' : int(pos),
+            'inputposition' : int(pos),
             'q~unit' : '1/nm',
             'I~unit' : 'arb.',
             'Ierr~unit' : 'arb.',
