@@ -1,11 +1,11 @@
-import sys
+import sys, os.path
 import numpy as np
 import matplotlib.pyplot as plt
 import optparse
 from xformats.yamlformats import read_yaml, write_yaml, read_ydat, write_ydat
 from xformats.matformats import read_mat
 from sxsplots import plot_iq
-from biosxs_reduce import stack_datafiles, chivectors, mean_stack
+from biosxs_reduce import stack_datafiles, chivectors, mean_stack, md5_file
 
 description="""\
 Filter repetitions by comparing to the first one.
@@ -34,7 +34,7 @@ def strings_to_incmap(slist):
     return inds
 
 
-def write_filtered(filtered, first, aver, incmap, fname):
+def write_filtered(filtered, first, aver, incmap, fname, inputfile=None, pos=-1):
     """Write an 'ydat' YAML file `fname` with filtered data and index array.
 
     `filtered` contains the filtered data, `incmap` the point by point inclusion
@@ -63,13 +63,26 @@ def write_filtered(filtered, first, aver, incmap, fname):
             else:
                 fp.write(']\n')
             i += 1
-        addict = {}
+        ad = {
+            'method' : "filter_repetitions",
+            'q~unit' : '1/nm',
+            'I~unit' : 'arb.',
+            'Ierr~unit' : 'arb.',
+            'I_first~unit' : 'arb.',
+            'Ierr_first~unit' : 'arb.',
+            'I_all~unit' : 'arb.',
+            'Ierr_all~unit' : 'arb.',
+            }
+        if inputfile:
+            ad['inputfile'] = [ inputfile, md5_file(inputfile) ]
+        if pos >= 0:
+            ad['inputposition'] = int(pos)
         outarr = np.zeros((7, filtered.shape[1]))
         outarr[0:3,:] = filtered
         outarr[3:5,:] = first[1:3,:]
         outarr[5:7,:] = aver[1:3,:]
         cols = ['q', 'I', 'Ierr', 'I_first', 'Ierr_first', 'I_all', 'Ierr_all']
-        write_ydat(outarr, fp, cols=cols, addict=addict)
+        write_ydat(outarr, fp, cols=cols, addict=ad, attributes=['~unit'])
 
 
 def read_filtered(fname):
@@ -165,7 +178,8 @@ def filter_matfile(fname, outstem):
         aver = mean_stack(stack[pos,...])
         filt, inds = chifilter_points(stack[pos,...])
         outname = "%s.p%02d.fil.ydat" % (outstem, pos)
-        write_filtered(filt, first, aver, inds, outname)
+        write_filtered(filt, first, aver, inds, outname, \
+            os.path.basename(fname), pos)
         print(outname)
 
 
