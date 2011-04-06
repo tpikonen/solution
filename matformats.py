@@ -53,6 +53,25 @@ def read_matfile(fname, **kwargs):
         print(vname)
 
 
+def read_mat(fname, **kwargs):
+    """Read a single variable from a mat-file to ipython interactive namespace.
+
+    Use read_matclean() if the mat-file contains more than one variable.
+
+    Does not do squeezing.
+
+    See scipy.io.loadmat for keyword arguments.
+    """
+    d = loadmat(fname, **kwargs)
+    d.pop('__version__')
+    d.pop('__header__')
+    d.pop('__globals__')
+    kk = d.keys()
+    if len(kk) > 1:
+        raise ValueError("More than one variable in MAT-file.")
+    return d[kk[0]]
+
+
 def write_mat(varname, fname=None, value=None, overwrite=False):
     """Write a Numpy array to a MAT-file.
 
@@ -80,3 +99,40 @@ def write_mat(varname, fname=None, value=None, overwrite=False):
     if os.path.isfile(fname) and not overwrite:
         raise IOError("File '%s' exists. Give 'overwrite=True' argument to overwrite." % fname)
     savemat(fname, {varname: value}, do_compression=1, oned_as='row')
+
+
+def read_matvars(fname, **kwargs):
+    """Read variables mat-file to ipython interactive namespace.
+
+    Skips '__version__', '__globals__' and '__header__'.
+    See scipy.io.loadmat for keyword arguments.
+    """
+    d = loadmat(fname, struct_as_record=1, squeeze_me=1, chars_as_strings=1, **kwargs)
+    d.pop('__version__')
+    d.pop('__header__')
+    d.pop('__globals__')
+    api = IPython.ipapi.get()
+    api.to_user_ns(d)
+
+
+def write_matvars(variables, fname, overwrite=False):
+    """Write ipython interactive variables to a MAT-file.
+
+    `variables` gives a list of variable names in the ipython interactive
+    namespace.
+
+    `fname` gives the output file name.
+
+    This function does not overwrite existing files, unless `overwrite`
+    keyword argument is True.
+    """
+    api = IPython.ipapi.get()
+    outdic = {}
+    for vv in variables:
+        try:
+            outdic[vv] = api.user_ns[vv]
+        except KeyError:
+            raise ValueError("Variable '%s' not found in IPython namespace." % vv)
+    if os.path.isfile(fname) and not overwrite:
+        raise IOError("File '%s' exists. Give 'overwrite=True' argument to overwrite." % fname)
+    savemat(fname, outdic, do_compression=1, oned_as='row')
