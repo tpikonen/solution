@@ -45,7 +45,11 @@ def read_ydat(fname, addict=False):
     # FIXME: Assumes that the columns are in a 'canonical' order [q, I, Ierr]
     # FIXME: What to do with the rest of the '=loops=' list values?
     if addict:
-        yd.pop('=loops=')
+        ld = yd.pop('=loops=')[0] # FIXME: only returns the first looped array
+        ld.pop('~vals')
+        yd['$cols'] = ld.pop('$cols')
+        for k,v in ld.iteritems():
+            yd[k[1:]] = v
         return (yarr.squeeze(), yd)
     else:
         return yarr.squeeze()
