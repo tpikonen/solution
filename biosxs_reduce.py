@@ -147,7 +147,7 @@ def errsubtract(a, b):
     Input values should have the same q-scale (this is not checked).
     """
     nn = clean_indices(a, b)
-    retval = np.zeros_like(a)
+    retval = np.zeros((3, a.shape[1]))
     retval[0,:] = a[0,:]
     retval[1,nn] = a[1,nn] - b[1,nn]
     retval[2,nn] = np.sqrt(np.square(a[2,nn]) + np.square(b[2,nn]))
