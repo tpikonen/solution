@@ -17,7 +17,7 @@ description="""\
 Filter repeats by linkage-based clustering.
 """
 
-usage="%prog file1.yfil file2.yfil ... "
+usage="%prog file1.ydat file2.ydat ... "
 
 default_chi2 = 2.2
 
@@ -233,7 +233,7 @@ def average_positions(filenames, chi2cutoff=1.15, write=True):
 
     if write:
         fname = filenames[0]
-        fname = "%s_clu.ydat" % fname[:(fname.find('_p'))]
+        fname = "%s.clu.ydat" % fname[:(fname.find('.p'))]
         print(fname)
         write_ydat(outarr, fname, addict=ad, cols=['q', 'I', 'Ierr', 'I_first', 'Ierr_first', 'I_all', 'Ierr_all'])
     return ms
