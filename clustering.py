@@ -202,14 +202,14 @@ def read_clustered(fname):
 
 
 # FIXME: Determine the cutoff chi2 automatically from the CDM
-def average_positions(filenames, chi2cutoff=1.15, write=True):
+def average_positions(filenames, chi2cutoff=1.15, write=True, plot=1):
     """Filter and average over positions in a capillary.
 
     """
     filenames.sort()
     stack = stack_datafiles(filenames)
 
-    incinds, cdm, links = cluster_reps(stack, threshold=chi2cutoff)
+    incinds, cdm, links = cluster_reps(stack, threshold=chi2cutoff, plot=plot)
     ms = mean_stack(stack[incinds,...])
 
     disinds = range(len(filenames))
@@ -244,10 +244,14 @@ def main():
     oprs.add_option("-c", "--chisq-threshold",
         action="store", type="float", dest="threshold", default=default_chi2,
         help="chi-squared threshold for cluster splitting. Default is %3g" % default_chi2)
+    oprs.add_option("-n", "--noplot",
+        action="store_false", dest="plot", default=True,
+        help="Do not plot results for each repetition.")
     (opts, args) = oprs.parse_args()
     if len(args) < 1:
         oprs.error("One or more input files needed.")
-    average_positions(args, chi2cutoff=opts.threshold, write=1)
+    average_positions(args, chi2cutoff=opts.threshold, write=1, plot=opts.plot)
+
 
 if __name__ == "__main__":
     main()
