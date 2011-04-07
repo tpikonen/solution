@@ -166,6 +166,7 @@ def cluster_reps(reps, threshold=1.0, plot=1):
 
     return (clist[0], cdm, links)
 
+
 def chi2norm_pdf(x, k):
     """Return pdf of normalized chi^2_k distribution at x.
 
@@ -178,26 +179,6 @@ def chi2norm_pdf(x, k):
         return np.exp((df/2.-1)*np.log(x+1e-300) - x/2. - gamln(df/2.) - (np.log(2)*df)/2.)
     #return k*scipy.stats.distributions.chi2.pdf(k*x, k)
     return k*chi2_pdf(k*x, k)
-
-
-def filter_stack(stack, threshold=1.0, plot=1):
-    """Return a stack cluster-averaged over repetitions (2nd index)."""
-    sh = stack.shape
-    fil = np.zeros((sh[0], sh[2], sh[3]))
-    for pos in range(sh[0]):
-        print("Pos. %d" % pos)
-        fil[pos,...] = cluster_reps(stack[pos,...], threshold, plot)
-        plt.waitforbuttonpress()
-    return fil
-
-
-def rawstacks_to_bufstacks(buflist, threshold=1.15):
-    for scanno in buflist:
-        fname = "s%02d.mat" % scanno
-        key = "s%02d" % scanno
-        stack = loadmat(fname)[key]
-        fst = filter_stack(stack, threshold)
-        write_mat("bufs%0d" % scanno, value=fst)
 
 
 def read_clustered(fname):
@@ -256,24 +237,6 @@ def average_positions(filenames, chi2cutoff=1.15, write=True):
         print(fname)
         write_ydat(outarr, fname, addict=ad, cols=['q', 'I', 'Ierr', 'I_first', 'Ierr_first', 'I_all', 'Ierr_all'])
     return ms
-
-
-def test(threshold=1.1):
-    rmean = 0.16
-    rerr = 0.0033
-    nn = scipy.stats.distributions.norm.rvs(rmean, rerr, size=(30, 1000))
-    asma = np.zeros((30, 3, 1000))
-    asma[:,0,:] = np.arange(1000)
-    asma[:,1,:] = nn
-    asma[:,2,:] = rerr*np.ones_like(nn)
-    asma[0,1,:] = asma[0,1,:] + 0.4 * rerr
-    asma[29,1,:] = asma[29,1,:] - 0.4 * rerr
-    dmc = chi2cdm(asma)
-#    links = hc.linkage(dmc)
-#    cc = hc.fcluster(links, threshold)
-#    print(cc)
-    plot_average(asma[0,...], asma[1,...], dmc, threshold)
-#    return links
 
 
 def main():
