@@ -18,10 +18,10 @@ default_outdir = "./stacks"
 default_indir = "./stacks"
 
 
-def get_buf(indir, scanno, posno):
-    """Read buffer SAXS curve from an ydat-file.
+def get_bg(indir, scanno, posno):
+    """Read background SAXS curve from an ydat-file.
     """
-    fname = indir + "/bufs%02d_p%02d.yfil" % (scanno, posno)
+    fname = indir + "/bufs%02d.p%02d.out.ydat" % (scanno, posno)
     return read_ydat(fname)
 
 
@@ -53,7 +53,7 @@ def subtract_background(scanfile, conffile, indir, outdir):
         (npos, nrep, _, _) = stack.shape
         for pos in range(npos):
             print(pos)
-            buf = get_buf(indir, bufscan, pos)
+            buf = get_bg(indir, bufscan, pos)
 #            buf = bufstack[pos]
             for rep in range(nrep):
                 subs[pos,rep,...] = errsubtract(stack[pos,rep,...], buf)
