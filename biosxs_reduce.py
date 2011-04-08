@@ -285,7 +285,7 @@ def stack_scan(conf, scanno, specscans, radind, modulus=10):
         repno = 0
         for pointno in range(posno, scanlen, modulus):
             # Normalize transmission to a reasonable value
-            dval = get_diode(specscans, scanno, pointno) / 10000.0
+            dval = get_diode(specscans, scanno, pointno) / 140000.0
             frname = get_framefilename(conf, scanno, pointno, 0)
             (I, err) = get_binned(radind['indices'], frname)
             stack[posno, repno, 0, :] = q
