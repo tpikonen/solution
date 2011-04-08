@@ -299,7 +299,7 @@ def stack_scan(conf, scanno, specscans, radind, modulus=10):
     return stack, fnames, dvals
 
 
-def stack_files(scanfile, conffile, outdir, modulus=10, eiger=0, matfile=1):
+def stack_files(scanfile, conffile, outdir, modulus=10, eiger=0, matfile=1, scannumber=-1):
     """Create stacks from scans read from `scanfile` and write the to files.
     """
     if not os.path.isdir(outdir):
@@ -310,8 +310,11 @@ def stack_files(scanfile, conffile, outdir, modulus=10, eiger=0, matfile=1):
     specscans = read_spec(conf['Specfile'])
     radind = read_matclean(conf['Indfile'])['radind']
     q = radind['q']
-    scannos = scans.keys()
-    scannos.sort()
+    if scannumber > 0:
+        scannos = [ scannumber ]
+    else:
+        scannos = scans.keys()
+        scannos.sort()
     for scanno in scannos:
         outname = "s%03d" % scanno
         if eiger:
@@ -322,7 +325,9 @@ def stack_files(scanfile, conffile, outdir, modulus=10, eiger=0, matfile=1):
                 stack_scan(conf, scanno, specscans, radind, modulus)
         stack = stack.squeeze()
         if matfile:
-            savemat(outdir+'/'+outname + ".mat", {outname: stack}, do_compression=1)
+            outfname = outdir+'/'+outname + ".mat"
+            savemat(outfname, {outname: stack}, do_compression=1)
+            print("Wrote output to '%s'." % outfname)
         else:
             for pos in range(stack.shape[0]):
                 outfname = outname+'.p%02d.all.ydat' % pos

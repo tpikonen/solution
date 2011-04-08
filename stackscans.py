@@ -23,11 +23,14 @@ def main():
         action="store", type="int", dest="modulus", default=default_modulus,
         help="Modulus, i.e. number of positions in the scan. Default %d" \
             % default_modulus)
+    oprs.add_option("-s", "--scannumber",
+        action="store", type="int", dest="scannumber", default=-1,
+        help="Only process the scan number given here.")
     (opts, args) = oprs.parse_args()
     if len(args) < 1:
         oprs.error("Scanfile argument required")
     scanfile = args[0]
-    stack_files(scanfile, opts.conf, opts.outdir, opts.modulus)
+    stack_files(scanfile, opts.conf, opts.outdir, opts.modulus, scannumber=opts.scannumber)
 
 
 if __name__ == "__main__":
