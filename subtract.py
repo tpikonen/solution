@@ -4,7 +4,7 @@ from optparse import OptionParser
 from scipy.io.matlab import savemat, loadmat
 from xformats.yamlformats import read_ydat, read_yaml, write_ydat
 from xformats.matformats import read_matclean
-from biosxs_reduce import read_experiment_conf, errsubtract, md5_file
+from biosxs_reduce import errsubtract, md5_file
 
 description="""\
 Subtract backgrounds and normalize to concentration.
@@ -12,8 +12,6 @@ Subtract backgrounds and normalize to concentration.
 
 usage="%prog scans.yaml"
 
-default_conf = "experiment_conf.yaml"
-default_modulus = 10
 default_outdir = "./stacks"
 default_indir = "./stacks"
 
@@ -25,11 +23,10 @@ def get_bg(indir, scanno, posno):
     return read_ydat(fname)
 
 
-def subtract_background_from_stacks(scanfile, conffile, indir, outdir):
+def subtract_background_from_stacks(scanfile, indir, outdir):
     """Subtract background from SAXS data in MAT-file stacks.
     """
     scans = read_yaml(scanfile)
-    conf = read_experiment_conf(conffile)
     scannos = scans.keys()
     scannos.sort()
     for scanno in scannos:
@@ -62,11 +59,10 @@ def subtract_background_from_stacks(scanfile, conffile, indir, outdir):
         savemat(outdir+'/'+outname + ".mat", {outname: subs}, do_compression=1)
 
 
-def subtract_background_from_ydats(scanfile, conffile, indir, outdir):
+def subtract_background_from_ydats(scanfile, indir, outdir):
     """Subtract backround from SAXS data in .ydat files.
     """
     scans = read_yaml(scanfile)
-    conf = read_experiment_conf(conffile)
     scannos = scans.keys()
     scannos.sort()
     for scanno in scannos:
@@ -106,9 +102,6 @@ def subtract_background_from_ydats(scanfile, conffile, indir, outdir):
 
 def main():
     oprs = OptionParser(usage=usage, description=description)
-    oprs.add_option("-c", "--conffile",
-        action="store", type="string", dest="conf", default=default_conf,
-        help="Configuration file to use. Default is '%s'" % default_conf)
     oprs.add_option("-o", "--outdir",
         action="store", type="string", dest="outdir", default=default_outdir,
         help="Output directory. Default is '%s'" % default_outdir)
@@ -123,9 +116,9 @@ def main():
         oprs.error("Scanfile argument required")
     scanfile = args[0]
     if opts.matfiles:
-        subtract_background_from_stacks(scanfile, opts.conf, opts.indir, opts.outdir)
+        subtract_background_from_stacks(scanfile, opts.indir, opts.outdir)
     else:
-        subtract_background_from_ydats(scanfile, opts.conf, opts.indir, opts.outdir)
+        subtract_background_from_ydats(scanfile, opts.indir, opts.outdir)
 
 if __name__ == "__main__":
     main()
