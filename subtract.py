@@ -23,12 +23,15 @@ def get_bg(indir, scanno, posno):
     return read_ydat(fname)
 
 
-def subtract_background_from_stacks(scanfile, indir, outdir):
+def subtract_background_from_stacks(scanfile, indir, outdir, scannumber=-1):
     """Subtract background from SAXS data in MAT-file stacks.
     """
     scans = read_yaml(scanfile)
-    scannos = scans.keys()
-    scannos.sort()
+    if scannumber > 0:
+        scannos = [ scannumber ]
+    else:
+        scannos = scans.keys()
+        scannos.sort()
     for scanno in scannos:
         print("Scan #%03d" % scanno)
         try:
@@ -59,12 +62,15 @@ def subtract_background_from_stacks(scanfile, indir, outdir):
         savemat(outdir+'/'+outname + ".mat", {outname: subs}, do_compression=1)
 
 
-def subtract_background_from_ydats(scanfile, indir, outdir):
+def subtract_background_from_ydats(scanfile, indir, outdir, scannumber=-1):
     """Subtract backround from SAXS data in .ydat files.
     """
     scans = read_yaml(scanfile)
-    scannos = scans.keys()
-    scannos.sort()
+    if scannumber > 0:
+        scannos = [ scannumber ]
+    else:
+        scannos = scans.keys()
+        scannos.sort()
     for scanno in scannos:
         print("Scan #%03d" % scanno)
         try:
@@ -100,6 +106,7 @@ def subtract_background_from_ydats(scanfile, indir, outdir):
             write_ydat(sub, outname, addict=ad, attributes=['~unit'])
             print(os.path.basename(outname))
 
+
 def main():
     oprs = OptionParser(usage=usage, description=description)
     oprs.add_option("-o", "--outdir",
@@ -111,15 +118,17 @@ def main():
     oprs.add_option("-m", "--matfiles",
         action="store_true", dest="matfiles", default=False,
         help="Subtract from and save to MAT-file stacks.")
+    oprs.add_option("-s", "--scannumber",
+        action="store", type="int", dest="scannumber", default=-1,
+        help="Only process the scan number given here.")
     (opts, args) = oprs.parse_args()
     if len(args) < 1:
         oprs.error("Scanfile argument required")
     scanfile = args[0]
     if opts.matfiles:
-        subtract_background_from_stacks(scanfile, opts.indir, opts.outdir)
+        subtract_background_from_stacks(scanfile, opts.indir, opts.outdir, opts.scannumber)
     else:
-        subtract_background_from_ydats(scanfile, opts.indir, opts.outdir)
+        subtract_background_from_ydats(scanfile, opts.indir, opts.outdir, opts.scannumber)
 
 if __name__ == "__main__":
     main()
-
