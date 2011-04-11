@@ -83,9 +83,12 @@ def read_gnom(fname):
     expdat = np.loadtxt(out)
     d['Iexp'] = expdat[:,:4]
     alist = re.split('Alpha    Discrp  Oscill  Stabil  Sysdev  Positv  Valcen    Total *[\r\n]*|[\r\n]* *\*\*\*  Golden section search to maximize estimate \*\*\*|[\r\n] *####            Final results            ####', fstr)
-    out = StringIO.StringIO(alist[1])
+    def split_junk(ss):
+        return re.sub(r'(.{12})(.{8})(.{8})(.{8})(.{8})(.{8})(.{8})(.{9})', \
+            r'\1 \2 \3 \4 \5 \6 \7 \8', ss)
+    out = StringIO.StringIO(split_junk(alist[1]))
     d['alpha_grid'] = np.loadtxt(out)
-    out = StringIO.StringIO(alist[3])
+    out = StringIO.StringIO(split_junk(alist[3]))
     d['alpha_search'] = np.loadtxt(out)
     d['alpha'] = float(re.search(".*Current ALPHA +: +([0-9\.\-+Ee]+) +Rg.*", fstr).group(1))
     d['solution_is'] = re.search(".*which is +([A-Z ]+) +solution.*", fstr).group(1)
