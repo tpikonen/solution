@@ -19,7 +19,7 @@ default_indir = "./stacks"
 def get_bg(indir, scanno, posno):
     """Read background SAXS curve from an ydat-file.
     """
-    fname = indir + "/bufs%02d.p%02d.out.ydat" % (scanno, posno)
+    fname = indir + "/bufs%03d.p%02d.out.ydat" % (scanno, posno)
     return read_ydat(fname)
 
 
@@ -45,20 +45,17 @@ def subtract_background_from_stacks(scanfile, indir, outdir, scannumber=-1):
             print("No concentration for scan #02d." % scanno)
             conc = 1.0
         print("Using concentration %g g/l." % conc)
-        stackname = "s%02d" % scanno
-#        bstackname = "bufs%02d" % bufscan
+        stackname = "s%03d" % scanno
         stack = loadmat(indir+'/'+stackname+'.mat')[stackname]
-#        bufstack = loadmat(indir+'/'+bstackname+'.mat')[bstackname]
         subs = np.zeros_like(stack)
         (npos, nrep, _, _) = stack.shape
         for pos in range(npos):
             print(pos)
             buf = get_bg(indir, bufscan, pos)
-#            buf = bufstack[pos]
             for rep in range(nrep):
                 subs[pos,rep,...] = errsubtract(stack[pos,rep,...], buf)
                 subs[pos,rep,1:3,:] = subs[pos,rep,1:3,:] / conc
-        outname = "subs%02d" % scanno
+        outname = "subs%03d" % scanno
         savemat(outdir+'/'+outname + ".mat", {outname: subs}, do_compression=1)
 
 
@@ -84,11 +81,11 @@ def subtract_background_from_ydats(scanfile, indir, outdir, scannumber=-1):
             print("No concentration for scan #02d." % scanno)
             conc = 1.0
         print("Using concentration %g g/l." % conc)
-        filelist = glob.glob(indir+"/s%02d.*.fil.ydat" % scanno)
+        filelist = glob.glob(indir+"/s%03d.*.fil.ydat" % scanno)
         for posno in xrange(len(filelist)):
-            bufname = indir + "/bufs%02d.p%02d.out.ydat" % (bufscan, posno)
+            bufname = indir + "/bufs%03d.p%02d.out.ydat" % (bufscan, posno)
             buf, dbuf = read_ydat(bufname, addict=1)
-            fname = indir + "/s%02d.p%02d.fil.ydat" % (scanno, posno)
+            fname = indir + "/s%03d.p%02d.fil.ydat" % (scanno, posno)
             sam, dsam = read_ydat(fname, addict=1)
             outname = os.path.basename(fname)
             outname = outdir+'/'+outname[:outname.find('.fil.ydat')]+'.sub.ydat'
