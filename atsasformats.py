@@ -5,9 +5,9 @@ def read_dat(fname):
     """Return dat-file contents as a Numpy array. Ignores the header and footer.
     """
     fid = open(fname)
-    fstr = fid.read(128000)
+    fstr = fid.read()
     fid.close()
-    ss = ''.join(re.findall('^ *([0-9]+\.[0-9]+.*\n)', fstr, re.MULTILINE))
+    ss = ''.join(re.findall('^ *([-]*[0-9]+\.[0-9]+.*\n)', fstr, re.MULTILINE))
     out = StringIO.StringIO(ss)
     d = np.loadtxt(out)
     out.close()
