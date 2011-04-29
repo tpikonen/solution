@@ -141,20 +141,6 @@ def md5_file(fname):
     return h
 
 
-def errsubtract(a, b):
-    """Return a - b with errors, where a and b are (3, N) arrays.
-
-    Input values should have the same q-scale (this is not checked).
-    """
-    nn = clean_indices(a, b)
-    retval = np.zeros((3, a.shape[1]))
-    retval[0,:] = a[0,:]
-    retval[1,nn] = a[1,nn] - b[1,nn]
-    retval[2,nn] = np.sqrt(np.square(a[2,nn]) + np.square(b[2,nn]))
-    retval[1:3,np.logical_not(nn)] = np.nan
-    return retval
-
-
 def stack_datafiles(fnames):
     """Return an array containing curves from the given list of files.
 

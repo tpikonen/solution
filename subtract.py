@@ -4,7 +4,7 @@ from optparse import OptionParser
 from scipy.io.matlab import savemat, loadmat
 from xformats.yamlformats import read_ydat, read_yaml, write_ydat
 from xformats.matformats import read_matclean
-from biosxs_reduce import errsubtract, md5_file
+from biosxs_reduce import md5_file, clean_indices
 
 description="""\
 Subtract backgrounds and normalize to concentration.
@@ -21,6 +21,21 @@ def get_bg(indir, scanno, posno):
     """
     fname = indir + "/bufs%03d.p%02d.out.ydat" % (scanno, posno)
     return read_ydat(fname)
+
+
+def errsubtract(a, b, bscale=1.0):
+    """Return `a` - `b` with errors, where `a` and `b` are (3, N) arrays.
+
+    Optionally, scale I and Ierr of `b` with `bscale` before subtracting.
+    Input values should have the same q-scale (this is not checked).
+    """
+    nn = clean_indices(a, b)
+    retval = np.zeros((3, a.shape[1]))
+    retval[0,:] = a[0,:]
+    retval[1,nn] = a[1,nn] - bscale*b[1,nn]
+    retval[2,nn] = np.sqrt(np.square(a[2,nn]) + np.square(bscale*b[2,nn]))
+    retval[1:3,np.logical_not(nn)] = np.nan
+    return retval
 
 
 def subtract_background_from_stacks(scanfile, indir, outdir, scannumber=-1):
