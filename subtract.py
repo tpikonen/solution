@@ -23,6 +23,14 @@ def get_bg(indir, scanno, posno):
     return read_ydat(fname)
 
 
+def highq_scale(sam, buf):
+    """Return the scale factor to match `buf to `sam` in the high-q region."""
+    q = buf[0,:]
+    qind = np.logical_and(q > 4.0, q < 5.0)
+    scale = np.mean(sam[1,qind]) / np.mean(buf[1,qind])
+    return scale
+
+
 def errsubtract(a, b, bscale=1.0):
     """Return `a` - `b` with errors, where `a` and `b` are (3, N) arrays.
 
@@ -126,8 +134,11 @@ def excess_ratio(scanfile, qrange=[4.0, 5.0], cnorm=True):
     return mlist, indlist, clist
 
 
-def subtract_background_from_ydats(scanfile, indir, outdir, scannumber=-1):
+def subtract_background_from_ydats(scanfile, indir, outdir, scannumber=-1, highqnorm=False):
     """Subtract backround from SAXS data in .ydat files.
+
+    If `highqnorm` is True, normalize the buffer to the sample intensity
+    in q-range [4.0, 5.0] 1/nm and adjust with a constant before subtracting.
     """
     scans = read_yaml(scanfile)
     if scannumber > 0:
@@ -156,9 +167,6 @@ def subtract_background_from_ydats(scanfile, indir, outdir, scannumber=-1):
             sam, dsam = read_ydat(fname, addict=1)
             outname = os.path.basename(fname)
             outname = outdir+'/'+outname[:outname.find('.fil.ydat')]+'.sub.ydat'
-            # Assumes the standard q, I, Ierr ordering in index 0 columns
-            sub = errsubtract(sam, buf)
-            sub[1:3,:] = sub[1:3,:] / conc
             ad = {
                 'samfile': [os.path.basename(fname), md5_file(fname)],
                 'buffile': [os.path.basename(bufname), md5_file(bufname)],
@@ -167,6 +175,21 @@ def subtract_background_from_ydats(scanfile, indir, outdir, scannumber=-1):
                 'I~unit' : dsam.get('I~unit', "unknown"),
                 'Ierr~unit' : dsam.get('Ierr~unit', "unknown"),
                 }
+            if highqnorm:
+                # 1 + 0.007 1/(g/l) is the excess of scattered intensity
+                # in a protein sample versus buffer in the q-range
+                # used [4.0, 5.0] 1/nm per concentration.
+                scale = highq_scale(sam, buf)
+                bufscale = scale * 1.0/(1.0 + 0.007*conc)
+                print("scale: %g, bufscale: %g" % (scale, bufscale))
+                buf[1,:] = bufscale * buf[1,:]
+                buf[2,:] = bufscale * buf[2,:]
+                ad['normalization'] = float(bufscale)
+            else:
+                ad['normalization'] = 'transmission'
+            # Assumes the standard q, I, Ierr ordering in index 0 columns
+            sub = errsubtract(sam, buf)
+            sub[1:3,:] = sub[1:3,:] / conc
             write_ydat(sub, outname, addict=ad, attributes=['~unit'])
             print(os.path.basename(outname))
 
@@ -185,14 +208,19 @@ def main():
     oprs.add_option("-s", "--scannumber",
         action="store", type="int", dest="scannumber", default=-1,
         help="Only process the scan number given here.")
+    oprs.add_option("-n", "--normhighq",
+        action="store_true", dest="highqnorm", default=False,
+        help="Scale buffer to sample intensity at high-q before subtracting.")
     (opts, args) = oprs.parse_args()
     if len(args) < 1:
         oprs.error("Scanfile argument required")
     scanfile = args[0]
+    if opts.matfiles and opts.highqnorm:
+        oprs.error("High-q normalization not supported with matfiles.")
     if opts.matfiles:
         subtract_background_from_stacks(scanfile, opts.indir, opts.outdir, opts.scannumber)
     else:
-        subtract_background_from_ydats(scanfile, opts.indir, opts.outdir, opts.scannumber)
+        subtract_background_from_ydats(scanfile, opts.indir, opts.outdir, opts.scannumber, opts.highqnorm)
 
 if __name__ == "__main__":
     main()
