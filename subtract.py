@@ -1,4 +1,4 @@
-import sys, glob, os.path
+import sys, glob, os.path, logging
 import numpy as np
 from optparse import OptionParser
 from scipy.io.matlab import savemat, loadmat
@@ -72,6 +72,58 @@ def subtract_background_from_stacks(scanfile, indir, outdir, scannumber=-1):
                 subs[pos,rep,1:3,:] = subs[pos,rep,1:3,:] / conc
         outname = "subs%03d" % scanno
         savemat(outdir+'/'+outname + ".mat", {outname: subs}, do_compression=1)
+
+
+def excess_ratio(scanfile, qrange=[4.0, 5.0], cnorm=True):
+    """Return ratio of (sam/buf)-1 in subtractions in the `qrange` given.
+
+    Subtractions are made from data given in `scanfile` as in
+    'subtract_background_from_ydats()', but only the ratios of
+    sample / buffer intensity are returned in a list of arrays.
+
+    If `cnorm` is True (default) then the ratio is normalized to the
+    concentration read from the scanfile.
+
+    Results from this function can be used to calibrate high-q normalized
+    subtraction.
+    """
+    scans = read_yaml(scanfile)
+    scannos = scans.keys()
+    scannos.sort()
+    indir = '.'
+    mlist = []
+    indlist = []
+    clist = []
+    for scanno in scannos:
+        try:
+            bufscan = scans[scanno][0]
+        except TypeError:
+            logging.warning("Scan #%03d is a buffer" % scanno)
+            continue
+        try:
+            conc = scans[scanno][1]
+        except TypeError:
+            print("No concentration for scan #02d." % scanno)
+            raise TypeError()
+        logging.warning("Scan #%03d" % scanno)
+        filelist = glob.glob(indir+"/s%03d.*.fil.ydat" % scanno)
+        marr= np.zeros((len(filelist)))
+        for posno in xrange(len(filelist)):
+            bufname = indir + "/bufs%03d.p%02d.out.ydat" % (bufscan, posno)
+            buf, dbuf = read_ydat(bufname, addict=1)
+            fname = indir + "/s%03d.p%02d.fil.ydat" % (scanno, posno)
+            sam, dsam = read_ydat(fname, addict=1)
+            # Assumes the standard q, I, Ierr ordering in index 0 columns
+            q = sam[0,:]
+            qind = np.logical_and(q > qrange[0], q < qrange[1])
+            ratio = np.mean(sam[1,qind]) / np.mean(buf[1,qind]) - 1.0
+            if cnorm:
+                ratio = ratio / conc
+            marr[posno] = ratio
+        mlist.append(marr)
+        indlist.append(scanno)
+        clist.append(conc)
+    return mlist, indlist, clist
 
 
 def subtract_background_from_ydats(scanfile, indir, outdir, scannumber=-1):
