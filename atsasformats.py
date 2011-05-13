@@ -100,6 +100,6 @@ def read_gnom(fname):
     d['Rg_err_real'] = float(realmatch.group(2))
     d['I0_real'] = float(realmatch.group(3))
     d['I0_err_real'] = float(realmatch.group(4))
-    d['title'] = re.search(".*Run title: *([^\r\n]+)", fstr).group(1)
+    d['title'] = re.search(".*Run title: *([^\r\n]*)", fstr).group(1)
     d['filename'] = re.search(".*Input file\(s\) : *([^\r\n]+)", fstr).group(1)
     return d
