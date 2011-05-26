@@ -47,9 +47,14 @@ def read_ydat(fname, addict=False):
     if addict:
         ld = yd.pop('=loops=')[0] # FIXME: only returns the first looped array
         ld.pop('~vals')
-        yd['$cols'] = ld.pop('$cols')
+        cols = ld.pop('$cols')
+        yd['$cols'] = cols
         for k,v in ld.iteritems():
-            yd[k[1:]] = v
+            if k[0] == '+':
+                for i in range(len(cols)):
+                    yd[cols[i]+k[1:]] = v[i]
+            else:
+                yd[k[1:]] = v
         return (yarr.squeeze(), yd)
     else:
         return yarr.squeeze()
