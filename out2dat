@@ -1,0 +1,41 @@
+#!/usr/bin/python
+
+import optparse
+import numpy as np
+from xformats.atsasformats import read_gnom, write_dat
+
+
+description="Write q vs. I, Ierr data from GNOM output to a .dat file."
+usage="%prog file1.out"
+
+
+def write_out2dat(inname, outname, threecols=False):
+    dd = read_gnom(inname)
+    dat = dd['Iexp']
+    dat = dat[:,0:3]
+    write_dat(dat, outname, comment=inname)
+
+
+def main():
+    oprs = optparse.OptionParser(usage=usage, description=description)
+    oprs.add_option("-o", "--output",
+        action="store", type="string", dest="outfile", default=None,
+        help="The output file name. Only one file can be converted if this option is given. The default is to use input file name with the extension '.dat' as the output file name.")
+    (opts, args) = oprs.parse_args()
+    if(len(args) < 1):
+        oprs.error("Input files required.")
+    if opts.outfile is not None and len(args) != 1:
+        oprs.error("Only one input argument can be given with explicit output file name.")
+
+    if opts.outfile is not None:
+        write_out2dat(args[0], opts.outfile)
+    else:
+        for inname in args:
+            if inname.endswith('.dat'):
+                fail(oprs, 2, "Input file ending with '.dat'. Refusing to continue.")
+            outname = inname[:inname.rfind('.')]+'.dat'
+            write_out2dat(inname, outname)
+
+
+if __name__ == "__main__":
+    main()
