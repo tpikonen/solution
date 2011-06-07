@@ -39,7 +39,7 @@ def main():
         for inname in args:
             if inname.endswith('.dat'):
                 oprs.error("Input file ending with '.dat'. Refusing to continue.")
-            outname = re.sub(r'\.[^\. ]*$', '.dat', inname)
+            outname = re.sub(r'\.[^\. ]*$', '.dat', os.path.basename(inname))
             write_yaml2dat(inname, outname, opts.threecols)
 
 
