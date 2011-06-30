@@ -65,13 +65,13 @@ def spsmooth(x, y, yerr):
     return sp(x)
 
 
-def plot_pr(ax, g):
+def plot_pr(ax, g, **kwargs):
     prf = g['prf']
     nconst = np.trapz(prf[:,1], prf[:,0])
-    lstr = g['filename'].rpartition('/')[2] + "/%1.3g, Rg=%g" % (nconst, g['Rg_rec'])
+    lstr = g['filename'].rpartition('/')[2] + "/%1.3g, Rg_real=%g+-%g" % (nconst, g['Rg_real'], g['Rg_err_real'])
     savehold = ax.ishold()
     ax.hold(1)
-    ax.plot(prf[:,0], prf[:,1]/nconst, label=lstr)
+    ax.plot(prf[:,0], prf[:,1]/nconst, label=lstr, **kwargs)
     ax.axhline(0.0, linewidth=0.4, color='black')
     ax.hold(savehold)
 
