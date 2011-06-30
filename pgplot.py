@@ -1,4 +1,4 @@
-import sys
+import sys, yaml
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import numpy as np
@@ -34,6 +34,9 @@ def main():
     oprs.add_option("-e", "--no-experimental",
         action="store_false", dest="expdata", default=True,
         help="Do not plot the experimental data")
+    oprs.add_option("-p", "--print",
+        action="store_true", dest="dump", default=False,
+        help="Print basic parameters read from GNOM-file.")
 
     (opts, args) = oprs.parse_args()
     if(len(args) < 1):
@@ -53,6 +56,13 @@ def main():
         plot_iq(ax1, g['Ireg'], label=lstr)
         if opts.expdata:
             plot_iq(ax1, g['Iexp'], err=opts.err, smerr=opts.smerr)
+        if opts.dump:
+            d = {}
+            d['filename'] = g['filename']
+            d['I0_real'] = float(g['I0_real'])
+            d['Rg_real'] = float(g['Rg_real'])
+            d['Rg_rec'] = float(g['Rg_rec'])
+            print(yaml.dump(d))
     ax1.set_xlabel("q / (1/nm)")
     ax1.set_ylabel("I(q)")
     ax1.legend()
