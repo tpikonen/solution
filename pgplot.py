@@ -49,7 +49,7 @@ def main():
     ax1.set_position([0.08, 0.1, 0.4, 0.8])
     for g in gnoms:
         g['filename'] = gen_basename(g['filename'])
-        lstr = g['filename'] + ", Rg=%g+-%g, I(0)=%g+-%g" % (g['Rg_real'], g['Rg_err_real'], g['I0_real'], g['I0_err_real'])
+        lstr = g['filename'] + ", Rg_rec=%g, I0_rec=%g" % (g['Rg_rec'], g['I0_rec'])
         plot_iq(ax1, g['Ireg'], label=lstr)
         if opts.expdata:
             plot_iq(ax1, g['Iexp'], err=opts.err, smerr=opts.smerr)
