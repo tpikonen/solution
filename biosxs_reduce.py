@@ -291,7 +291,6 @@ def stack_files(scanfile, conffile, outdir, modulus=10, eiger=0, matfile=1, scan
     if not os.path.isdir(outdir):
         # FIXME: Create the directory
         raise IOError("Output directory does not exist.")
-    scans = read_yaml(scanfile)
     conf = read_experiment_conf(conffile)
     specscans = read_spec(conf['Specfile'])
     radind = read_matclean(conf['Indfile'])['radind']
@@ -299,6 +298,7 @@ def stack_files(scanfile, conffile, outdir, modulus=10, eiger=0, matfile=1, scan
     if scannumber > 0:
         scannos = [ scannumber ]
     else:
+        scans = read_yaml(scanfile)
         scannos = scans.keys()
         scannos.sort()
     for scanno in scannos:

@@ -27,9 +27,12 @@ def main():
         action="store", type="int", dest="scannumber", default=-1,
         help="Only process the scan number given here.")
     (opts, args) = oprs.parse_args()
-    if len(args) < 1:
-        oprs.error("Scanfile argument required")
-    scanfile = args[0]
+    scanfile = None
+    if opts.scannumber < 0:
+        if len(args) < 1:
+            oprs.error("Scanfile argument required")
+        else:
+            scanfile = args[0]
     stack_files(scanfile, opts.conf, opts.outdir, opts.modulus, scannumber=opts.scannumber)
 
 
