@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
 import numpy as np
 import scipy.interpolate as ip
+from solution.utils import clean_indices
 
 
 def preplot(*args, **kwargs):
