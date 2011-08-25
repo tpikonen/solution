@@ -285,6 +285,51 @@ def stack_scan(conf, scanno, specscans, radind, modulus=10):
     return stack, fnames, dvals
 
 
+def stack_repeatscan(conf, scanno, specscans, radind, repeats=5):
+    """Return normalized 1D curves grouped by positions and repetitions.
+
+    This function regroups position scans with several repeats in each
+    position to an array.
+
+    Argument `repeats` gives the number of repeated exposures made in the
+    same position.
+
+    The intensity (and it's error) values are normalized by the 'diode'
+    counter in `specscans`.
+
+    Return value is an array with coordinates [posno, repno, q/I/err, data]
+    and shape (number_of_positions, number_of_repetitions, 3, len(q)).
+    """
+    q = radind['q']
+    scanlen = get_scanlen(specscans, scanno)
+    if (scanlen % repeats) != 0:
+        raise ValueError ("Number of points in a scan is not divisible by number of repeats.")
+
+    numpos = scanlen / repeats
+    stack = np.zeros((numpos, repeats, 3, len(q)))
+    fnames = [ [] for x in range(numpos) ]
+    dvals = [ [] for x in range(numpos) ]
+
+    pointno = 0
+    for posno in range(numpos):
+        print("scan #%d, pos %d" % (scanno, posno))
+        sys.stdout.flush()
+        for repno in range(repeats):
+            # Normalize transmission to a reasonable value
+            dval = get_diode(specscans, scanno, pointno) / 140000.0
+            frname = get_framefilename(conf, scanno, posno, repno)
+            (I, err) = get_binned(radind['indices'], frname)
+            stack[posno, repno, 0, :] = q
+            stack[posno, repno, 1, :] = I/dval
+            stack[posno, repno, 2, :] = err/dval
+            md5 = md5_file(frname)
+            fnames[posno].append([os.path.basename(frname), md5])
+            dvals[posno].append(dval)
+            pointno = pointno+1
+
+    return stack, fnames, dvals
+
+
 def stack_files(scanfile, conffile, outdir, modulus=10, eiger=0, matfile=1, scannumber=-1):
     """Create stacks from scans read from `scanfile` and write the to files.
     """
