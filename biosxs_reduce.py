@@ -11,7 +11,7 @@ from scipy.io.matlab import savemat, loadmat
 
 
 def read_experiment_conf(fname):
-    """Return a dictionary with values read from conffile.
+    """Return a dictionary with values read from YAML-format conffile.
     """
     yd = read_yaml(fname)
     c = {}
@@ -27,7 +27,7 @@ def read_experiment_conf(fname):
 
 
 def clean_indices(x, y):
-    """Return indices which contain only good floats in x and y.
+    """Return indices which do not have NaNs or negative values in x and y.
     """
     nn = np.logical_not(np.logical_or(
         np.logical_or(np.isnan(x[1,:]), np.isnan(y[1,:])),
@@ -67,12 +67,11 @@ def chi2cdm(X):
         for j in xrange(i+1, m):
             dm[k] = chivectors(X[i], X[j])
             k = k + 1
-
     return dm
 
 
 def get_framefilename(conf, scanno, pointno, burstno):
-    """Return the filename of a frame at a given scan, point, and burst number.
+    """Return Pilatues frame filename at a given scan, point, and burst number.
     """
     c = conf
     fname = "%s/S%05d/e%05d_%d_%05d_%05d_%05d.%s" % (c['Pilatusdir'], scanno, c['Expno'], c['Detno'], scanno, pointno, burstno, c['Cbfext'])
@@ -80,7 +79,7 @@ def get_framefilename(conf, scanno, pointno, burstno):
 
 
 def eiger_filename(conf, scanno, pointno, burstno):
-    """Return the filename of a frame at a given scan, point, and burst number.
+    """Return Eiger frame filename at a given scan, point, and burst number.
     """
     c = conf
     fname = "%s/S%05d/e%05d_%d_%05d_%05d_%05d.%s" % (c['Eigerdir'], scanno, c['Expno'], c['Detno'], scanno, pointno, burstno, "h5")
@@ -88,6 +87,8 @@ def eiger_filename(conf, scanno, pointno, burstno):
 
 
 def get_binned(indices, framefile):
+    """Return mean and std of bins (defined by `indices`) in `framefile`.
+    """
     fr = read_cbf(framefile)
     stats = r.binstats(indices, fr.im, calculate=(1,0,0,1))
     return (stats[0], stats[3]) # Mean and Poisson count std of mean
@@ -134,6 +135,8 @@ def get_scanlen(specscans, scanno):
 
 
 def md5_file(fname):
+    """Return the MD5 hash of file named `fname`.
+    """
     md5 = hashlib.md5()
     with open(fname) as f:
         md5.update(f.read())
@@ -246,6 +249,9 @@ def stack_eiger(conf, scanno, specscans, radind, modulus=10):
 def stack_scan(conf, scanno, specscans, radind, modulus=10):
     """Return normalized 1D curves grouped by positions and repetitions.
 
+    This function regroups repeated scans over the same positions to
+    an array.
+
     Argument `modulus` gives the number of unique positions in a scan.
 
     The intensity (and it's error) values are normalized by the 'diode'
@@ -331,7 +337,10 @@ def stack_repeatscan(conf, scanno, specscans, radind, repeats=5):
 
 
 def stack_files(scanfile, conffile, outdir, modulus=10, eiger=0, matfile=1, scannumber=-1):
-    """Create stacks from scans read from `scanfile` and write the to files.
+    """Create stacks from scans read from YAML-file `scanfile`.
+
+    If `matfile` is true (default), write output stacks to a MAT-file.
+    Otherwise writes (slowly) to a YAML-file.
     """
     if not os.path.isdir(outdir):
         # FIXME: Create the directory
