@@ -1,5 +1,5 @@
 import optparse
-from biosxs_reduce import *
+from utils import *
 
 description="""\
 Write MAT-file stacks of scans given in input file, grouped by position.

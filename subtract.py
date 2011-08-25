@@ -4,7 +4,7 @@ from optparse import OptionParser
 from scipy.io.matlab import savemat, loadmat
 from xformats.yamlformats import read_ydat, read_yaml, write_ydat
 from xformats.matformats import read_matclean
-from biosxs_reduce import md5_file, clean_indices
+from utils import md5_file, clean_indices
 
 description="""\
 Subtract backgrounds and normalize to concentration.

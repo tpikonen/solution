@@ -7,7 +7,7 @@ import scipy.special
 from scipy.spatial.distance import squareform
 from optparse import OptionParser
 from sxsplots import plot_iq
-from biosxs_reduce import mean_stack, stack_datafiles, md5_file, chivectors, chi2cdm
+from utils import mean_stack, stack_datafiles, md5_file, chivectors, chi2cdm
 from scipy.special import gammaln as gamln
 from scipy.io import loadmat
 from xformats.matformats import write_mat

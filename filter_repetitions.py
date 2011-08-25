@@ -5,7 +5,7 @@ import optparse
 from xformats.yamlformats import read_yaml, write_yaml, read_ydat, write_ydat
 from xformats.matformats import read_mat
 from sxsplots import plot_iq
-from biosxs_reduce import stack_datafiles, chivectors, mean_stack, md5_file
+from utils import stack_datafiles, chivectors, mean_stack, md5_file
 
 description="""\
 Filter repetitions by comparing to the first one.
