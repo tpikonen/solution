@@ -6,7 +6,7 @@ import scipy.optimize as optim
 import scipy.interpolate as ip
 import matplotlib.pyplot as plt
 import radbin as c
-from sxsplots import logshow
+from solution.plots import logshow
 from xformats.detformats import read_cbf, read_eiger, read_mask
 from optparse import OptionParser
 
