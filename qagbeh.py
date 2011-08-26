@@ -105,6 +105,7 @@ def qagbeh(Iagbeh, first_index=None, wavel=0.1, Dlatt=5.8380, pixel=0.172, peaks
     chan_n = channo([1, wavel], N)
     lsqsol = np.linalg.lstsq(chan_n.reshape(len(N), 1), opos)
     L = lsqsol[0][0] # L is in units of pixel size
+    s_to_d = L*pixel # in mm
 
 #    # Nonlinear optimization with variable L and wavelength
 #    popt = mf.modelfit(channo, [L, wavel], N, opos, np.ones_like(opos))
@@ -113,7 +114,7 @@ def qagbeh(Iagbeh, first_index=None, wavel=0.1, Dlatt=5.8380, pixel=0.172, peaks
 #    L = popt[0][0]
 #    wavel = popt[0][1]
 
-    print("S-to-D = %g pixels (%g mm for %.4g mm pixel with %.4g nm radiation)"         % (L, L*pixel, pixel, wavel))
+    print("S-to-D = %g pixels with %.4g nm radiation (%g mm for %.4g mm pixel)"         % (L, wavel, s_to_d, pixel))
     q = (4*np.pi/wavel)*np.sin(0.5*np.arctan(np.arange(len(Iagbeh))/L))
 #   fitted_peakpos = (4*np.pi/wavel)*np.sin(0.5*np.arctan(opos/L))
     plt.clf()
