@@ -4,7 +4,7 @@ from scipy.stats.distributions import chi2
 from scipy.spatial.distance import squareform
 from xformats.yamlformats import read_ydat, write_ydat
 from xformats.matformats import read_mat
-from sxsplots import plot_iq
+from plots import plot_iq
 from utils import chivectors, chi2cdm, mean_stack, md5_file
 from clustering import plot_distmat, plot_distmat_marginal, plot_clusterhist
 

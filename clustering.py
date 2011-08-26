@@ -6,7 +6,7 @@ import scipy.stats.distributions
 import scipy.special
 from scipy.spatial.distance import squareform
 from optparse import OptionParser
-from sxsplots import plot_iq
+from plots import plot_iq
 from utils import mean_stack, stack_datafiles, md5_file, chivectors, chi2cdm
 from scipy.special import gammaln as gamln
 from scipy.io import loadmat

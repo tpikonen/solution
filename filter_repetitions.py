@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import optparse
 from xformats.yamlformats import read_yaml, write_yaml, read_ydat, write_ydat
 from xformats.matformats import read_mat
-from sxsplots import plot_iq
+from plots import plot_iq
 from utils import stack_datafiles, chivectors, mean_stack, md5_file
 
 description="""\
