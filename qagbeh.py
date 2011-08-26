@@ -39,6 +39,7 @@ def get_firstpeak(Iagbeh, plot=0):
         plt.clf()
         plt.hold(1)
         plt.plot(dlog)
+        plt.plot(np.diff(highs))
         for pp in peaks:
             plt.axvline(pp, color="red")
         plt.show()
