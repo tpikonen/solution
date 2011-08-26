@@ -204,6 +204,7 @@ def find_bad_pixels(files, hot_threshold=np.inf, var_factor=5.0, chipgaps=False,
     Asum = np.zeros((s[0], s[1]), dtype=np.float64)
     Asumsq = np.zeros((s[0], s[1]), dtype=np.float64)
     for i in range(0,len(files)):
+        print(files[i])
         tim = (read_fun(files[i])).im.astype(np.float64)
         Asum += tim
         Asumsq += tim**2.0
@@ -231,6 +232,7 @@ def find_bad_pixels(files, hot_threshold=np.inf, var_factor=5.0, chipgaps=False,
     # total bads outside gaps
     a_bads = reduce(bool_add, [a_consts, a_randoms, a_hots, a_deads, a_medf, a_gross])
 
+    print("Frame has %dx%d = %d pixels" % (s[0], s[1], s[0]*s[1]))
     print("%d invalid pixels in module gaps" % (np.sum(a_gaps)))
     nconsts = np.sum(a_consts)
     print("%d constant pixels outside gaps, %d are >= %d" % \
