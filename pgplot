@@ -6,7 +6,7 @@ import matplotlib as mpl
 import numpy as np
 from xformats.atsasformats import read_gnom
 from optparse import OptionParser
-from sxsplots import plot_iq, plot_pr
+from plots import plot_iq, plot_pr
 
 description="Plot GNOM output files."
 
