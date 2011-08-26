@@ -134,7 +134,9 @@ def qagbeh(Iagbeh, first_index=None, wavel=0.1, Dlatt=5.8380, pixel=0.172, peaks
     plt.hold(0)
     plt.show()
 
-    return q
+    peakpositions = [fopt[1] for (fopt, inds) in optpars]
+
+    return q, s_to_d, peakpositions
 
 
 def main():
@@ -155,6 +157,10 @@ def main():
     oprs.add_option("-E", "--energy",
         action="store", type="float", dest="energy", default=default_E,
         help="Energy (in keV) to use in S-D distance determination. Default %3g" % default_E)
+    oprs.add_option("-f", "--firstpeak",
+        action="store", type="int", dest="firstpeak", default=None,
+        help="Channel (pixel) of the first peak. Use if automatic detection fails.")
+    # FIXME: Add pixel size option -P
     (opts, args) = oprs.parse_args()
 
     if len(args) == 1:
@@ -175,7 +181,7 @@ def main():
     Iagbeh = r.binstats(radind['indices'], frame.im)[0] # Get the mean
 
     wavel = hc_keV_nm / opts.energy
-    q = qagbeh(Iagbeh, wavel=wavel, debug=opts.debug)
+    q, s_to_d, peakpositions = qagbeh(Iagbeh, first_index=opts.firstpeak, wavel=wavel, debug=opts.debug)
     lq = loopyaml.Loopdict({'q': map(float, list(q))}, ['q'])
     xformats.yamlformats.write_yaml(lq, opts.outfile)
     if opts.writebin:
