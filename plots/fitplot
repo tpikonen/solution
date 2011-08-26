@@ -1,0 +1,87 @@
+#!/usr/bin/env python
+
+import sys
+import matplotlib.pyplot as plt
+import matplotlib.mlab as mlab
+import numpy
+import numpy as np
+import scipy.interpolate as ip
+from optparse import OptionParser
+from xformats.atsasformats import read_dat
+from plots import plot_iq
+
+description="Plot .fit / .fir files."
+
+usage="%prog <file1.fit> <file2.fit> ..."
+
+def plot_fit(fig, dat, columns, fname, err, smerr, residuals):
+    qcol = columns[0]
+    icol = columns[1]
+    errcol = columns[2]
+    fitcol = columns[3]
+    if residuals:
+        ax = fig.add_axes([0.1, 0.3, 0.85, 0.60])
+    else:
+        ax = fig.add_axes([0.1, 0.1, 0.85, 0.85])
+    # FIXME: Use points instead of lines here?
+    if err:
+        plot_iq(ax, dat[:,[qcol, icol, errcol]], label=fname, err=1, smerr=smerr)
+    else:
+        plot_iq(ax, dat[:,[qcol, icol]], label=fname, err=0)
+    plot_iq(ax, dat[:,[qcol, fitcol]], label='fit')
+    if residuals:
+        x = dat[:,qcol]
+        y = dat[:,icol]
+        yfit = dat[:,fitcol]
+        rax = fig.add_axes([0.1, 0.1, 0.85, 0.15])
+        if err:
+            rax.plot(x, (yfit - y) / dat[:,errcol], '.')
+        else:
+            rax.plot(x, (yfit - y), '.')
+        rax.set_xlabel("q / (1/nm)")
+
+
+def main():
+    oprs = OptionParser(usage=usage, description=description)
+    oprs.add_option("-n", "--no-errors",
+        action="store_false", dest="err", default=True,
+        help="Do not plot errorbands")
+    oprs.add_option("-r", "--raw-errors",
+        action="store_false", dest="smerr", default=True,
+        help="Do not smooth errorbands")
+    oprs.add_option("-e", "--residuals",
+        action="store_true", dest="residuals", default=False,
+        help="Also plot the residuals of the fit")
+    oprs.add_option("-o", "--oligomer",
+        action="store_true", dest="oligomer", default=False,
+        help="Plot fit file from oligomer")
+    oprs.add_option("-3", "--three-columns",
+        action="store_true", dest="threecol", default=False,
+        help="Plot a data file with 3 columns only (like in EOM .fit files)")
+
+    (opts, args) = oprs.parse_args()
+    if(len(args) < 1):
+        oprs.error("Input file argument required")
+
+    columns = [0, 1, 2, 3]
+    if opts.threecol:
+        columns = [0, 1, [], 2]
+        opts.err = False
+    if opts.oligomer:
+        columns = [0, 1, 3, 2]
+
+    dats = []
+    for fname in args:
+        dat = read_dat(fname).T
+        dats.append((dat, fname))
+
+    fig = plt.figure()
+    plt.rcParams['legend.fontsize'] = 12.0
+    for dat in dats:
+        plot_fit(fig, dat[0], columns, dat[1], opts.err, opts.smerr, opts.residuals)
+    fig.set_size_inches(15,10)
+    plt.show()
+
+
+if __name__ == "__main__":
+    main()
