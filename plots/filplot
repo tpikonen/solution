@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from optparse import OptionParser
-from solution.filter_repetitions import *
+from solution.repfilter import *
 
 description="Plot a result from filtering and averaging repetitions."
 
