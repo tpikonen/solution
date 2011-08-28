@@ -1,3 +1,46 @@
-#!/bin/sh
+#!/usr/bin/env python
 
-exec python ${PYHOME}/solution/subtract.py $*
+from subtraction import *
+
+description="""\
+Subtract backgrounds from SAXS curves and normalize them to concentration.
+Sample / background relations and sample concentrations are given in the
+input YAML file.
+"""
+
+usage="%prog scans.yaml"
+
+default_outdir = "./stacks"
+default_indir = "./stacks"
+
+
+def main():
+    oprs = OptionParser(usage=usage, description=description)
+    oprs.add_option("-o", "--outdir",
+        action="store", type="string", dest="outdir", default=default_outdir,
+        help="Output directory. Default is '%s'" % default_outdir)
+    oprs.add_option("-i", "--indir",
+        action="store", type="string", dest="indir", default=default_indir,
+        help="Output directory. Default is '%s'" % default_outdir)
+    oprs.add_option("-m", "--matfiles",
+        action="store_true", dest="matfiles", default=False,
+        help="Subtract from and save to MAT-file stacks.")
+    oprs.add_option("-s", "--scannumber",
+        action="store", type="int", dest="scannumber", default=-1,
+        help="Only process the scan number given here.")
+    oprs.add_option("-n", "--normhighq",
+        action="store_true", dest="highqnorm", default=False,
+        help="Scale buffer to sample intensity at high-q before subtracting.")
+    (opts, args) = oprs.parse_args()
+    if len(args) < 1:
+        oprs.error("Scanfile argument required")
+    scanfile = args[0]
+    if opts.matfiles and opts.highqnorm:
+        oprs.error("High-q normalization not supported with matfiles.")
+    if opts.matfiles:
+        subtract_background_from_stacks(scanfile, opts.indir, opts.outdir, opts.scannumber)
+    else:
+        subtract_background_from_ydats(scanfile, opts.indir, opts.outdir, opts.scannumber, opts.highqnorm)
+
+if __name__ == "__main__":
+    main()
