@@ -7,12 +7,6 @@ from xformats.matformats import read_mat
 from plots import plot_iq
 from utils import stack_datafiles, chivectors, mean_stack, md5_file
 
-description="""\
-Filter repetitions by comparing to the first one.
-"""
-
-usage="%prog [ scans.yaml | -m stack.mat [ stack2.mat ... ] ]"
-
 
 def incmap_to_strings(incmap):
     """Return a list of strings representing the bool 2D array `incmap`.
@@ -183,36 +177,3 @@ def filter_matfile(fname, outstem):
         print(outname)
 
 
-def main():
-    oprs = optparse.OptionParser(usage=usage, description=description)
-    oprs.add_option("-m", "--matfiles",
-        action="store_true", dest="matfiles", default=False,
-        help="Input arguments are matfiles instead of a YAML file.")
-    (opts, args) = oprs.parse_args()
-    if len(args) < 1:
-        oprs.error("One or more input files needed.")
-
-    if opts.matfiles:
-        filenames = args
-        for fname in filenames:
-            outstem = "%s" % fname[:(fname.find('.mat'))]
-            filter_matfile(fname, outstem)
-    else:
-        if len(args) > 1:
-            oprs.error("Only one YAML scan list accepted.")
-        scans = read_yaml(args[0])
-        scannos = scans.keys()
-        scannos.sort()
-        for scanno in scannos:
-            try:
-                bufscan = scans[scanno][0]
-            except TypeError:
-                print("Scan #%03d is a buffer" % scanno)
-                continue
-            print("Scan #%03d" % scanno)
-            fname = "s%d.mat" % scanno
-            outstem = "%s" % fname[:(fname.find('.mat'))]
-            filter_matfile(fname, outstem)
-
-if __name__ == "__main__":
-    main()
