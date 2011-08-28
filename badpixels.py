@@ -2,11 +2,6 @@ import warnings, scipy.signal
 import numpy as np
 import numpy.ma as ma
 from xformats.detformats import read_cbf, read_eiger, write_pnglog
-from optparse import OptionParser
-
-description="Write a bad pixel mask based on analysis of a series of input frames"
-
-usage="%prog -o <output.png> [cbf-dir | file1.cbf file2.cbf ...]"
 
 
 def pilatus_gapmask(modules, chipgaps=False, chipedges=2):
@@ -247,52 +242,3 @@ def find_bad_pixels(files, hot_threshold=np.inf, var_factor=5.0, chipgaps=False,
     print("Mask has a total of %d bad pixels" % (np.sum(mask == False)))
 
     return mask
-
-
-def main():
-    import sys, os.path, glob
-    framefile_ext = 'cbf'
-    oprs = OptionParser(usage=usage, description=description)
-    oprs.add_option("-o", "--output",
-        action="store", type="string", dest="outfile", default="")
-    oprs.add_option("-t", "--hot-threshold",
-        action="store", type="float", dest="hot_threshold", default=np.inf)
-    oprs.add_option("-c", "--chipgaps",
-        action="store_true", dest="chipgaps", default=False,
-        help="Mask also chip gaps in addition to module gaps")
-    oprs.add_option("-e", "--eiger",
-        action="store_true", dest="eiger", default=False,
-        help="Process Eiger frames.")
-    (opts, args) = oprs.parse_args()
-
-    files = []
-    if(len(args) == 1 and os.path.isdir(args[0])):
-        files = glob.glob(os.path.abspath(args[0]) + '/*.' + framefile_ext)
-    elif(len(args) > 1):
-        files = args
-
-    if(len(files) < 2):
-        print >> sys.stderr, oprs.format_help()
-        print >> sys.stderr, "At least 2 input files are needed"
-        sys.exit(1)
-
-    if len(opts.outfile) > 0:
-        outfile = opts.outfile
-    else:
-        print >> sys.stderr, oprs.format_help()
-        print >> sys.stderr, "Output file name is missing"
-        sys.exit(1)
-
-    if opts.eiger:
-        read_fun = read_eiger
-    else:
-        read_fun = read_cbf
-
-    mask = find_bad_pixels(files, hot_threshold=opts.hot_threshold,
-                            chipgaps=opts.chipgaps, read_fun=read_fun)
-    write_pnglog(mask, outfile)
-
-
-if __name__ == "__main__":
-    main()
-
