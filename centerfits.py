@@ -10,10 +10,6 @@ from solution.plots import logshow
 from xformats.detformats import read_cbf, read_eiger, read_mask
 from optparse import OptionParser
 
-usage="%prog agbeh.cbf [agbeh2.cbf ...]"
-description="Determine the direct beam center from diffraction patterns."
-
-# FIXME: This file is a mess.
 
 # Helper functions
 
@@ -140,6 +136,7 @@ def get_min_gradient(image, cen, mask=None, start_exc=25):
 #    plt.plot(r, smoo, r, I, r, grad)
 #    print("Min gradient: %d" % gradmin)
     return gradmin
+
 
 # Fitting functions
 
@@ -334,6 +331,7 @@ def centerfit_ringvariance(image, startcen=None, ringradius=None, ringwidth=2,
     plotend(startcen, optcen, plotit)
     return optcen
 
+
 def centerfit_sectors(image, startcen=None, rlimits=None, secwidth=10.0, mask=None, plotit=False):
     """Return beam center from an image with (approximate) cylindrical symmetry.
 
@@ -374,78 +372,3 @@ def centerfit_sectors(image, startcen=None, rlimits=None, secwidth=10.0, mask=No
     optcen = optim.fmin(ofun_sectors, startcen, disp=0)
     plotend(startcen, optcen, plotit)
     return optcen
-
-
-def parse_center(center_str):
-    mob = re.match(' *([0-9.]+)[,]([0-9.]+) *', center_str)
-    if mob is None or len(mob.groups()) != 2:
-        return None
-    else:
-        return (float(mob.group(1)), float(mob.group(2)))
-
-# Command line interface
-
-def main():
-    oprs = OptionParser(usage=usage, description=description)
-    oprs.add_option("-n", "--noplot",
-        action="store_true", dest="noplot", default=False,
-        help="Do not plot the frame and center")
-    oprs.add_option("-m", "--maskfile",
-        action="store", type="string", dest="maskfile", default=None)
-    oprs.add_option("-c", "--center",
-        action="store", type="string", dest="inicen_str", default=None)
-    oprs.add_option("-e", "--eiger",
-        action="store_true", dest="eiger", default=False,
-        help="Process Eiger frames.")
-    (opts, args) = oprs.parse_args()
-
-    inicen = None
-    if opts.inicen_str is not None:
-        inicen = parse_center(opts.inicen_str)
-        if inicen is None:
-            print >> sys.stderr, oprs.format_help()
-            print >> sys.stderr, "Could not parse center"
-            sys.exit(1)
-        print("Using " + str(inicen) + " as initial center.")
-    if(len(args) < 1):
-        print >> sys.stderr, oprs.format_help()
-        print >> sys.stderr, "At least one input file is needed"
-        sys.exit(1)
-
-    mask = None
-    if opts.maskfile != None:
-        mask = read_mask(opts.maskfile)
-
-    init_func = centerfit_1dsymmetry
-    refine_func = centerfit_sectors
-    if opts.eiger:
-        read_fun = read_eiger
-    else:
-        read_fun = read_cbf
-
-    cens = np.zeros((len(args), 2))
-    agbe = read_fun(args[0])
-    print(args[0])
-    if inicen is None:
-        startcen = init_func(agbe.im, mask=mask)
-    else:
-        startcen = inicen
-    print(startcen)
-    for i in range(0, len(args)):
-        agbe = read_fun(args[i])
-        center = refine_func(agbe.im, startcen=startcen, plotit=(not opts.noplot), mask=mask)
-        print(center.__repr__())
-        cens[i,:] = center
-
-    mcen = np.mean(cens, axis=0)
-    dcen = np.std(cens, axis=0)
-    # FIXME: Do proper clustering on centers
-    tstr = refine_func.__name__ + "\n Center: " + str(mcen) + '+-' + str(dcen)
-    print(tstr)
-    plt.plot(cens[:,0], cens[:,1], '+b', mcen[0], mcen[1], '+r')
-    plt.title(tstr)
-    plt.show()
-
-
-if __name__ == "__main__":
-    main()
