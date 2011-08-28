@@ -13,14 +13,6 @@ from scipy.io import loadmat
 from xformats.matformats import write_mat
 from xformats.yamlformats import write_ydat, read_ydat
 
-description="""\
-Filter repeats by linkage-based clustering.
-"""
-
-usage="%prog file1.ydat file2.ydat ... "
-
-default_chi2 = 2.2
-
 
 def filter_with_linkage(links, threshold=1.0):
     """Return the indices of repetitions belonging to the selected clusters.
@@ -237,21 +229,3 @@ def average_positions(filenames, chi2cutoff=1.15, write=True, plot=1):
         print(fname)
         write_ydat(outarr, fname, addict=ad, cols=['q', 'I', 'Ierr', 'I_first', 'Ierr_first', 'I_all', 'Ierr_all'])
     return ms
-
-
-def main():
-    oprs = OptionParser(usage=usage, description=description)
-    oprs.add_option("-c", "--chisq-threshold",
-        action="store", type="float", dest="threshold", default=default_chi2,
-        help="chi-squared threshold for cluster splitting. Default is %3g" % default_chi2)
-    oprs.add_option("-n", "--noplot",
-        action="store_false", dest="plot", default=True,
-        help="Do not plot results for each repetition.")
-    (opts, args) = oprs.parse_args()
-    if len(args) < 1:
-        oprs.error("One or more input files needed.")
-    average_positions(args, chi2cutoff=opts.threshold, write=1, plot=opts.plot)
-
-
-if __name__ == "__main__":
-    main()
