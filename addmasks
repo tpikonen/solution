@@ -1,3 +1,36 @@
-#!/bin/sh
+#!/usr/bin/env python
 
-exec python ${PYHOME}/solution/addmasks.py $*
+import os.path
+import numpy as np
+from optparse import OptionParser
+from xformats.detformats import read_mask, write_pnglog
+
+
+description="Write a combined mask from two or more mask files."
+
+usage="%prog [-o <output.png>] mask1.png mask2.png [ mask3.png ...]"
+
+
+def main():
+    oprs = OptionParser(usage=usage, description=description)
+    oprs.add_option("-o", "--output",
+        action="store", type="string", dest="outfile", default="mask.png",
+        help="Output file name. The default is 'mask.png'.")
+    oprs.add_option("-f", "--force",
+        action="store_true", dest="overwrite", default=False,
+        help="Overwrite output file if it exists.")
+    (opts, args) = oprs.parse_args()
+    if len(args) < 2:
+        oprs.error("At least two input files required.")
+    if not opts.overwrite and os.path.exists(opts.outfile):
+        oprs.error("Output file '%s' exists." % opts.outfile)
+
+    mask = read_mask(args[0])
+    for fname in args[1:]:
+        m2 = read_mask(fname)
+        mask = np.logical_and(mask, m2)
+
+    write_pnglog(mask, opts.outfile)
+
+if __name__ == "__main__":
+    main()
