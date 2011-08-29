@@ -3,12 +3,11 @@ import scipy.constants
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
-import xformats.detformats, csaxsformats, xformats.yamlformats, loopyaml
 import radbin as r
 import modelfit as mf
 from scipy.signal import medfilt
 from centerfits import fwhm
-from xformats.matformats import read_matclean, write_mat
+from solution.xformats.matformats import read_matclean, write_mat
 
 
 def get_firstpeak(Iagbeh, plot=0):

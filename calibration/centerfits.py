@@ -7,7 +7,7 @@ import scipy.interpolate as ip
 import matplotlib.pyplot as plt
 import radbin as c
 from solution.plots import logshow
-from xformats.detformats import read_cbf, read_eiger, read_mask
+from solution.xformats.detformats import read_cbf, read_eiger, read_mask
 from optparse import OptionParser
 
 

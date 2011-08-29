@@ -1,7 +1,7 @@
 import warnings, scipy.signal
 import numpy as np
 import numpy.ma as ma
-from xformats.detformats import read_cbf, read_eiger, write_pnglog
+from solution.xformats.detformats import read_cbf, read_eiger, write_pnglog
 
 
 def pilatus_gapmask(modules, chipgaps=False, chipedges=2):
