@@ -7,7 +7,7 @@ import numpy
 import numpy as np
 import scipy.interpolate as ip
 from optparse import OptionParser
-from xformats.utils import read_sasdata
+from solution.xformats.utils import read_sasdata
 from plots import plot_iq
 
 description="Plot DAT files."

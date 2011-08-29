@@ -4,7 +4,7 @@ import sys, yaml
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import numpy as np
-from xformats.atsasformats import read_gnom
+from solution.xformats.atsasformats import read_gnom
 from optparse import OptionParser
 from plots import plot_iq, plot_pr
 
