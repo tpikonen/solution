@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import loopyaml
 from optparse import OptionParser
 from qagbeh import *
 from solution.xformats.yamlformats import write_yaml
