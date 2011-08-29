@@ -1,0 +1,9 @@
+basedir: '/afs/psi.ch/project/cxs/users/ikonen/spire/Data10/'
+pilatusdir: 'pilatus/S00000-00999/'
+cbfext: 'cbf.bz2'
+expno: 13552
+detno: 1
+specfile: 'specES1/dat-files/specES1_started_2011_06_17_0933.dat'
+indfile: 'pyanalysis/radind.mat'
+position_modulus: 10
+

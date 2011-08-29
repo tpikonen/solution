@@ -1,0 +1,27 @@
+## Notation for background scans: Only the scan number as key:
+# Spire buffer
+95:
+96:
+97:
+98:
+99:
+# Spire buffer + magnesium (polymerization buffer)
+100:
+101:
+102:
+103:
+104:
+## Notation for sample scans:
+## scanno: [ bg_scanno, conc ]
+# SpireBCDhelix + Actin
+105: [ 95, 4.11 ]
+106: [ 96, 2.55 ]
+107: [ 97, 1.0275 ]
+108: [ 98, 0.51375 ]
+109: [ 99, 0.256875 ]
+# SpireBCDhelix + Actin in polym. buffer
+110: [ 100, 3.8 ]
+111: [ 102, 1.9 ]
+112: [ 103, 0.95 ]
+113: [ 104, 0.475 ]
+
