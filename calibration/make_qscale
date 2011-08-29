@@ -1,0 +1,72 @@
+#!/usr/bin/env python
+
+from optparse import OptionParser
+from qagbeh import *
+
+description="""\
+Determine q-scale from a diffraction standard giving equally spaced peaks,
+silver behenate by default.
+
+Writes  to the 'q' key in the input bins dictionary, and also to
+'qscale.yaml' file.
+"""
+
+usage="%prog -b <radindfile.mat> [-o <outputfile.yaml>] file.cbf"
+
+hc_keV_nm = scipy.constants.physical_constants['inverse meter-electron volt relationship'][0] * 1e9 / 1e3 # 1.239... keV * nm
+
+default_E = hc_keV_nm / 0.1 # 12.4 keV
+
+
+def main():
+    framefile_ext = 'cbf'
+    oprs = OptionParser(usage=usage, description=description)
+    oprs.add_option("-b", "--bins",
+        action="store", type="string", dest="binfile", default=None,
+        help="Read bins from a 'radind.mat' file (output of make_radind).")
+    oprs.add_option("-o", "--output",
+        action="store", type="string", dest="outfile", default="qscale.yaml",
+        help="Output file containing the q-scale in looped YAML format. Default is 'qscale.yaml'")
+    oprs.add_option("-n", "--readonly-bins",
+        action="store_false", dest="writebin", default=True,
+        help="Do not write q-scale to the binfile given with option -b.")
+    oprs.add_option("-d", "--debug",
+        action="store_true", dest="debug", default=False,
+        help="Show extra debug plots.")
+    oprs.add_option("-E", "--energy",
+        action="store", type="float", dest="energy", default=default_E,
+        help="Energy (in keV) to use in S-D distance determination. Default %3g" % default_E)
+    oprs.add_option("-f", "--firstpeak",
+        action="store", type="int", dest="firstpeak", default=None,
+        help="Channel (pixel) of the first peak. Use if automatic detection fails.")
+    # FIXME: Add pixel size option -P
+    (opts, args) = oprs.parse_args()
+
+    if len(args) == 1:
+        fname = args[0]
+#    elif(len(args) == 1 and os.path.isdir(args[0])):
+    else:
+        oprs.error("One input file required.")
+
+    if opts.binfile:
+        radind = read_matclean(opts.binfile)['radind']
+    else:
+        oprs.error("Binfile name is missing.")
+
+    if not "indices" in radind:
+        oprs.error("Binfile is missing 'indices' key.")
+
+    frame = xformats.detformats.read_cbf(fname)
+    Iagbeh = r.binstats(radind['indices'], frame.im)[0] # Get the mean
+
+    wavel = hc_keV_nm / opts.energy
+    q, s_to_d, peakpositions = qagbeh(Iagbeh, first_index=opts.firstpeak, wavel=wavel, debug=opts.debug)
+    lq = loopyaml.Loopdict({'q': map(float, list(q))}, ['q'])
+    xformats.yamlformats.write_yaml(lq, opts.outfile)
+    if opts.writebin:
+        radind['q'] = q
+        write_mat('radind', fname=opts.binfile, value=radind, overwrite=1)
+
+
+if __name__ == "__main__":
+    main()
