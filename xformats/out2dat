@@ -2,7 +2,7 @@
 
 import optparse
 import numpy as np
-from xformats.atsasformats import read_gnom, write_dat
+from solution.xformats.atsasformats import read_gnom, write_dat
 
 
 description="Write q vs. I, Ierr data from GNOM output to a .dat file."

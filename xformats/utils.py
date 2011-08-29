@@ -1,6 +1,6 @@
 import numpy as np
-from xformats.atsasformats import read_dat
-from xformats.yamlformats import read_loopyaml
+from atsasformats import read_dat
+from yamlformats import read_loopyaml
 
 
 def read_sasdata(fname):

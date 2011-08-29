@@ -4,8 +4,8 @@ import sys, re, os
 import numpy as np
 import matplotlib.pyplot as plt
 from optparse import OptionParser
-from yamlformats import read_ydat
-from atsasformats import write_dat
+from solution.xformats.yamlformats import read_ydat
+from solution.xformats.atsasformats import write_dat
 
 
 description="Convert YAML-dat format to dat."
