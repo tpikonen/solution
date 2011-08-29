@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
 import radbin as r
-import modelfit as mf
+import solution.modelfit as mf
 from scipy.signal import medfilt
 from centerfits import fwhm
 from solution.xformats.matformats import read_matclean, write_mat
