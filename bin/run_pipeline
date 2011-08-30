@@ -1,0 +1,19 @@
+#!/bin/bash
+
+set -e
+
+die () {
+    echo "Usage: $(basename $0) targets.txt"
+    echo ""
+    echo $1
+    exit 1
+}
+
+njobs=4
+targets=$1
+mfile=$(dirname $0)/../pipeline.make
+
+[ -f $mfile ] || die "Makefile ($mfile) not found."
+[ $# -ge 1 ] && [ -f $targets ] || die "Please give a file containing target file names."
+
+cat $targets | xargs make -j $njobs -f $mfile
