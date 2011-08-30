@@ -365,11 +365,11 @@ def stack_files(scanfile, conffile, outdir, modulus=10, eiger=0, matfile=1, scan
                 stack_scan(conf, scanno, specscans, radind, modulus)
         stack = stack.squeeze()
         if matfile:
-            outfname = outdir+'/'+outname + ".mat"
-            savemat(outfname, {outname: stack}, do_compression=1)
-            print("Wrote output to '%s'." % outfname)
+            outfn = outdir+'/'+outname + ".mat"
+            savemat(outfn, {outname: stack}, do_compression=1, oned_as='row')
+            print("Wrote output to '%s'." % outfn)
         else:
             for pos in range(stack.shape[0]):
-                outfname = outname+'.p%02d.all.ydat' % pos
-                write_stack_ydat(outdir+'/'+outfname, stack[pos], fnames[pos], dvals[pos], conf)
-                print("Wrote output to '%s'." % outfname)
+                outfn = outname+'.p%02d.all.ydat' % pos
+                write_stack_ydat(outdir+'/'+outfn, stack[pos], fnames[pos], dvals[pos], conf)
+                print("Wrote output to '%s'." % outfn)

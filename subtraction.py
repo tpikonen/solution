@@ -70,7 +70,8 @@ def subtract_background_from_stacks(scanfile, indir, outdir, scannumber=-1):
                 subs[pos,rep,...] = errsubtract(stack[pos,rep,...], buf)
                 subs[pos,rep,1:3,:] = subs[pos,rep,1:3,:] / conc
         outname = "subs%03d" % scanno
-        savemat(outdir+'/'+outname + ".mat", {outname: subs}, do_compression=1)
+        savemat(outdir+'/'+outname + ".mat", {outname: subs}, do_compression=1,
+                oned_as='row')
 
 
 def excess_ratio(scanfile, qrange=[4.0, 5.0], cnorm=True):
