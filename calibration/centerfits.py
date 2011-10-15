@@ -173,16 +173,19 @@ def symcen1d(arr, minlen=40, cen_exc=1):
     cexc = cen_exc
     mlen = minlen
     out = -1.0 * np.ones_like(arr)
+    ww = np.zeros_like(arr)
     for i in range(cexc+mlen,alen-(cexc+mlen)):
         chimaxlen = min(i, alen-i)
         slf = slice(i+cexc,i+chimaxlen)
         slr = slice(i-cexc,i-chimaxlen, -1)
         out[i] = chivectors(arr[slf], arr[slr])
+        ww[i] = np.mean(arr[(i-chimaxlen):(i+chimaxlen)]) # "weight"
     out[np.isnan(out)] = -1
     M = out.max()
     out[out < 0] = M
-    return out.argmin()
-#    return out
+    out = -1.0*(out - M)
+    out = out*np.log(ww)
+    return out.argmax()
 
 
 def centerfit_1dsymmetry(image, minlen=100, cen_exc=15, mask=None, plotit=False):
