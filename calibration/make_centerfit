@@ -71,8 +71,11 @@ def main():
     # FIXME: Do proper clustering on centers
     tstr = refine_func.__name__ + "\n center = " + str(mcen) + '# +-' + str(dcen)
     print(tstr)
+    plt.clf()
     plt.plot(cens[:,0], cens[:,1], '+b', mcen[0], mcen[1], '+r')
     plt.title(tstr)
+    plt.axis('equal')
+    plt.ticklabel_format(style='plain', useOffset=False)
     plt.show()
 
 
