@@ -76,10 +76,9 @@ def mark_cross(center, **kwargs):
 def plotstart(image, startcen, mask=None,  plotit=True):
     sp = None
     if plotit:
-        plt.ion()
+        plt.ioff()
         plt.figure(1)
-#        sp = plt.subplot(111)
-        plt.hold(0)
+        plt.clf()
         if mask is None:
             logshow(image)
         else:
@@ -89,7 +88,6 @@ def plotstart(image, startcen, mask=None,  plotit=True):
         mark_cross(startcen, color='yellow', linestyle='--')
         plt.axis(ax)
         plt.draw()
-#        plt.show()
     return sp
 
 
@@ -105,8 +103,6 @@ def plotend(startcen, optcen, plotit=True):
         sp.set_xlim(llo[0], lhi[0])
         sp.set_ylim(llo[1], lhi[1])
         plt.show()
-#        plt.waitforbuttonpress()
-        plt.hold(0)
 
 
 def get_min_gradient(image, cen, mask=None, start_exc=25):
