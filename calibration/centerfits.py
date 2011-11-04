@@ -149,7 +149,7 @@ def centerfit_gradient(image, mask=None, plotit=False):
     pass
 
 
-def symcen1d(arr, minlen=40, cen_exc=1):
+def symcen1d(arr, minlen=None, cen_exc=1):
     """Return the index of the symmetry center in a 1D array.
 
     The center of symmetry is determined by extracting two symmetric
@@ -168,6 +168,8 @@ def symcen1d(arr, minlen=40, cen_exc=1):
     alen = len(arr)
     cexc = cen_exc
     mlen = minlen
+    if not mlen:
+        mlen = int(alen/10.0)
     out = -1.0 * np.ones_like(arr)
     ww = np.zeros_like(arr)
     for i in range(cexc+mlen,alen-(cexc+mlen)):
@@ -195,7 +197,7 @@ def symcen1d(arr, minlen=40, cen_exc=1):
     return np.nanargmax(out)
 
 
-def centerfit_1dsymmetry(image, minlen=100, cen_exc=15, mask=None, plotit=False):
+def centerfit_1dsymmetry(image, minlen=None, cen_exc=5, mask=None, plotit=False):
     """Return indices of an approximate symmetry center in a 2D image.
 
     The symmetry center of the 2D array is calculated from 1D mean values
