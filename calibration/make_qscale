@@ -4,7 +4,7 @@ import loopyaml
 from optparse import OptionParser
 from qagbeh import *
 from solution.xformats.yamlformats import write_yaml
-from solution.xformats.detformats import read_cbf
+from solution.xformats.detformats import read_detframe
 
 description="""\
 Determine q-scale from a diffraction standard giving equally spaced peaks,
@@ -59,7 +59,7 @@ def main():
     if not "indices" in radind:
         oprs.error("Binfile is missing 'indices' key.")
 
-    frame = read_cbf(fname)
+    frame = read_detframe(fname)
     Iagbeh = r.binstats(radind['indices'], frame.im)[0] # Get the mean
 
     wavel = hc_keV_nm / opts.energy
