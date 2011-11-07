@@ -20,6 +20,17 @@ class det_struct:
     pass
 
 
+def read_detframe(fname):
+    """Detect the format of `file`, and read, if it's a known detector format.
+    """
+    if fname.find('.cbf') > 0:
+        return read_cbf(fname)
+    elif fname.find('.h5') > 0:
+        return read_eiger(fname)
+    else:
+        raise IOError("Format of file '%s' not recognized." % fname)
+
+
 def read_tif_pilatus(fname):
     """Read a .tif file from a Pilatus detector."""
     headerlen = 580
