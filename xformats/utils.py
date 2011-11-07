@@ -24,3 +24,38 @@ def read_sasdata(fname):
     else:
         dat = read_dat(fname).T
     return dat, qunit, Iunit
+
+
+def maybe_uncompress(filename):
+    """Uncompress a file if it's compressed with typical compression programs.
+
+    Return a (fname, is_temporary) tuple, where `fname` is the name
+    of the file which is guaranteed to be uncompressed, and `is_temporary`
+    is a boolean indicating whether the file is temporarary, and should be
+    deleted after reading.
+    """
+    import tempfile
+
+    def write_to_temp(fin):
+        tf = tempfile.NamedTemporaryFile(suffix=".read_cbf", delete=False)
+        tf.file.write(fin.read())
+        fin.close()
+        tf.file.close()
+        return tf.name
+
+    is_temporary = False
+    # FIXME: Use magic to detect file type.
+    if filename.endswith(".bz2"):
+        import bz2
+        fin = bz2.BZ2File(filename, mode='r')
+        fname = write_to_temp(fin)
+        is_temporary = True
+    elif filename.endswith(".gz"):
+        import gzip
+        fin = gzip.GzipFile(filename, mode='r')
+        fname = write_to_temp(fin)
+        is_temporary = True
+    else:
+        fname = filename
+
+    return (fname, is_temporary)

@@ -1,5 +1,6 @@
 from __future__ import with_statement
 import numpy as np
+from utils import maybe_uncompress
 
 class det_struct:
     __doc__ = """Pseudo-structure for detector frame data.
@@ -176,52 +177,38 @@ def write_pnglog(a, fname):
     fp.close()
 
 
-def read_eiger(fname, imno=None):
+def read_eiger(filename, imno=None):
     """Read the HDF5 output of the Eiger prototype module at cSAXS.
 
     If an integer keyword argument `imno` is given, return only a single
     frame at that given index. Otherwise return the full image stack.
     """
-    import h5py
+    import h5py, os
+
+    (fname, file_is_temporary) = maybe_uncompress(filename)
     f = h5py.File(fname, "r")
     d = det_struct()
     if imno:
         d.im = np.array(f['eh5']['images'][imno])
     else:
         d.im = np.array(f['eh5']['images']).squeeze()
+
+    if file_is_temporary:
+        os.remove(fname)
+
     return d
 
 
 def read_cbf(filename, have_cbflib=1):
     """Read CBF output from the Pilatus detector at cSAXS.
     """
-    import os, re, tempfile
+    import os, re
 
     MAXHEADER = 4096
     CBF_SIGNATURE = "###CBF: VERSION"
     BINARY_SIGNATURE = '\x0c\x1a\x04\xd5'
 
-    def write_to_temp(fin):
-        tf = tempfile.NamedTemporaryFile(suffix=".read_cbf", delete=False)
-        tf.file.write(fin.read())
-        fin.close()
-        tf.file.close()
-        return tf.name
-
-    file_is_temporary = False
-    # FIXME: Use magic to detect file type.
-    if filename.endswith(".bz2"):
-        import bz2
-        fin = bz2.BZ2File(filename, mode='r')
-        fname = write_to_temp(fin)
-        file_is_temporary = True
-    elif filename.endswith(".gz"):
-        import gzip
-        fin = gzip.GzipFile(filename, mode='r')
-        fname = write_to_temp(fin)
-        file_is_temporary = True
-    else:
-        fname = filename
+    (fname, file_is_temporary) = maybe_uncompress(filename)
     fid = open(fname)
     hdr = fid.read(MAXHEADER)
     if(hdr[0:15] != "###CBF: VERSION"):
