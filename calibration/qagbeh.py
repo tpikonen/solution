@@ -15,7 +15,7 @@ def get_firstpeak(Iagbeh, plot=0):
     """
     #FIXME: Test with noisy data and check for smoothing algorithm other
     # than medfilt (Maybe with smoothing routine from Chris?).
-    filt = medfilt(np.log(Iagbeh), kernel_size=5)
+    filt = medfilt(np.log10(Iagbeh), kernel_size=5)
     dlog = medfilt(np.diff(filt), kernel_size=5)
     highs = 1.0*(dlog > 0.5*np.nanmax(dlog))
     peaks = mlab.find(np.diff(highs) < -0.5)
@@ -23,10 +23,13 @@ def get_firstpeak(Iagbeh, plot=0):
     if plot:
         plt.clf()
         plt.hold(1)
-        plt.plot(dlog)
-        plt.plot(np.diff(highs))
+        plt.plot(np.log10(Iagbeh), label="log10(I)")
+        plt.plot(filt, label="log10(Ifilt)")
+        plt.plot(dlog, label="diff(log10(Ifilt))")
+        plt.plot(np.diff(highs), label="highs")
         for pp in peaks:
             plt.axvline(pp, color="red")
+        plt.legend()
         plt.show()
     return peaks[0]
 
