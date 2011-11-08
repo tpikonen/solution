@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import loopyaml
+import scipy.constants
 from optparse import OptionParser
 from qagbeh import *
 from solution.xformats.yamlformats import write_yaml
@@ -42,12 +43,14 @@ def main():
     oprs.add_option("-f", "--firstpeak",
         action="store", type="int", dest="firstpeak", default=None,
         help="Channel (pixel) of the first peak. Use if automatic detection fails.")
+    oprs.add_option("-p", "--numpeaks",
+        action="store", type="int", dest="numpeaks", default=None,
+        help="Number of peaks to fit. Useful for limiting peaks in oriented standards.")
     # FIXME: Add pixel size option -P
     (opts, args) = oprs.parse_args()
 
     if len(args) == 1:
         fname = args[0]
-#    elif(len(args) == 1 and os.path.isdir(args[0])):
     else:
         oprs.error("One input file required.")
 
@@ -63,7 +66,7 @@ def main():
     Iagbeh = r.binstats(radind['indices'], frame.im)[0] # Get the mean
 
     wavel = hc_keV_nm / opts.energy
-    q, s_to_d, peakpositions = qagbeh(Iagbeh, first_index=opts.firstpeak, wavel=wavel, debug=opts.debug)
+    q, s_to_d, peakpositions = qagbeh(Iagbeh, first_index=opts.firstpeak, numpeaks=opts.numpeaks, wavel=wavel, debug=opts.debug)
     lq = loopyaml.Loopdict({'q': map(float, list(q))}, ['q'])
     write_yaml(lq, opts.outfile)
     if opts.writebin:
