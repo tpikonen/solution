@@ -1,5 +1,3 @@
-import sys, os.path, glob
-import scipy.constants
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
@@ -34,42 +32,64 @@ def get_firstpeak(Iagbeh, plot=0):
     return peaks[0]
 
 
-def qagbeh(Iagbeh, first_index=None, wavel=0.1, Dlatt=5.8380, pixel=0.172, peaks=None, debug=0):
-    """Return q-scale optimized from silver behenate scattering.
+def qagbeh(I, first_index=None, numpeaks=None, wavel=0.1, Dlatt=5.8380, pixel=0.172, debug=0):
+    """Return q-scale from (AgBeh) standard.
+
+    Arguments:
+        `I` : Scattering intensity from the standard.
 
     Keyword arguments:
-        `first_index` : Approximate index of the first AgBeh-reflection
-            in the `Iagbeh`. If None, then it is estimated with a heuristic.
+        `first_index` : Approximate index of the first reflection
+            in the `I`. If None, then it is estimated with a heuristic.
+        `numpeaks` : Number of peaks to fit. If None, then a value is
+            determined from `first_index` and length of `I`.
+
+    See qagbeh() for rest of the keyword arguments.
+    """
+    width_per_firstindex = 0.1 # Peak half width in units of first peak position
+    if first_index is None:
+        first_index = get_firstpeak(I, plot=debug)
+    if len(I) < first_index:
+        raise ValueError("first_index must be inside the intensity array.")
+    endcutoff = 2*int(first_index * width_per_firstindex)
+    if numpeaks is None:
+        endrange = len(I)-endcutoff
+    else:
+        endrange = min(len(I)-endcutoff, first_index*numpeaks+1)
+    peaks = np.arange(first_index, endrange, first_index)
+    return qagbeh_refine(I, peaks, wavel, Dlatt, pixel)
+
+
+def qagbeh_refine(I, peaks, wavel=0.1, Dlatt=5.8380, pixel=0.172):
+    """Return q-scale from (AgBeh) standard with given initial peak positions.
+
+    Arguments:
+        `I` : Scattering intensity from the standard.
+        `peaks` : A list of initial peak indices to be fitted.
+
+    Keyword arguments:
         `wavel` : Wavelength of the radiation in nanometers (!).
         `Dlatt` : Lattice spacing in nm, default 5.8380 nm for AgBeh.
         `pixel` : Pixel size in mm.
-        `peaks` : A list of all approximate peak indices (should be supplied
-            only if automatic peak detection fails)
     """
-
+    Iagbeh = I
     width_per_firstindex = 0.1 # Peak half width in units of first peak position
 
-    if peaks is None:
-        if first_index is None:
-            first_index = get_firstpeak(Iagbeh, plot=debug)
-        if len(Iagbeh) < first_index:
-            raise ValueError("first_index must be inside the intensity array.")
-        endcutoff = 2*int(first_index * width_per_firstindex)
-        peaks = np.arange(first_index, len(Iagbeh)-endcutoff, first_index)
-
     # Use wider range around the peak for finding initial fitting parameters
-    Wini = 2*int(peaks[0] * width_per_firstindex)
-    Wfit = int(peaks[0] * width_per_firstindex)
+    Wini = max(9, 2*int(peaks[0] * width_per_firstindex))
+    Wfit = max(9, int(peaks[0] * width_per_firstindex))
     opos = []
     optpars = []
     for i in range(len(peaks)):
         chan = int(peaks[i])
-        inds = np.arange(chan-Wini, chan+Wini)
+        inds = np.arange(max(0, chan-Wini), chan+Wini)
+        inds = inds[np.isfinite(Iagbeh[inds])]
         heightini = np.max(Iagbeh[inds])
         cenini = inds[np.argmax(Iagbeh[inds])]
         sigini = fwhm(inds, Iagbeh[inds]) / (2*np.sqrt(np.log(2)))
         linit = [10.0*heightini, cenini, sigini, 0.0]
         fitinds = np.arange(cenini-Wfit, cenini+Wfit)
+        fitinds = fitinds[np.isfinite(Iagbeh[fitinds])]
         (lopt, chisq) = mf.modelfit(mf.lorentzconstant, linit, fitinds,
             Iagbeh[fitinds], Iagbeh[fitinds], noplot=1)
         optpars.append((lopt, fitinds))
@@ -77,6 +97,15 @@ def qagbeh(Iagbeh, first_index=None, wavel=0.1, Dlatt=5.8380, pixel=0.172, peaks
 
     opos = np.array(opos)
     print("Refined peak positions:\n %s" % opos)
+
+    return qagbeh_fit(Iagbeh, opos, wavel=wavel, Dlatt=Dlatt, pixel=pixel)
+
+
+def qagbeh_fit(I, peaks, wavel=0.1, Dlatt=5.8380, pixel=0.172):
+    """Fit given peak positions to a planar detector model.
+    """
+    Iagbeh = I
+    opos = peaks
     N = np.arange(1, len(peaks)+1)
     qn = (2*np.pi/Dlatt) * N
 
@@ -112,18 +141,16 @@ def qagbeh(Iagbeh, first_index=None, wavel=0.1, Dlatt=5.8380, pixel=0.172, peaks
     plt.xlabel("Peak number")
 
     plt.subplot(122)
-    plt.semilogy(q, Iagbeh)
+    plt.semilogy(q, Iagbeh, color='black')
     plt.xlabel("q / (1/nm)")
     plt.hold(1)
-    for (fopt, inds) in optpars:
-        plt.semilogy(q[inds], mf.lorentzconstant(fopt, inds))
-        plt.axvline(q[np.round(fopt[1])], color='red', label="Fitted pos.")
+    for pp in peaks:
+        plt.axvline(q[np.round(pp)], color='red', label="Fitted pos.")
     for ppos in qn:
-        plt.axvline(ppos, color='blue', label="Theor. pos.")
+        plt.axvline(ppos, color='blue', label="Ideal pos.")
 
     plt.hold(0)
+    plt.title("Red: fitted, Blue: ideal positions")
     plt.show()
 
-    peakpositions = [fopt[1] for (fopt, inds) in optpars]
-
-    return q, s_to_d, peakpositions
+    return q, s_to_d, peaks
