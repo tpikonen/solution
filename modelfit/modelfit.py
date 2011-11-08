@@ -116,6 +116,7 @@ def plotmodel(modelf, params, x, y, vary, residuals=0, **kwargs):
         plt.hold(1)
         plt.semilogy(x, y, label="Data")
         plt.legend()
+    plt.show()
 
 
 def semilogymodel(modelf, params, x, y, vary, residuals=0, **kwargs):
