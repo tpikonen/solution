@@ -57,22 +57,21 @@ def filter_distmat(dmat, threshold):
     db = dmat > threshold
     dbelow = dmat.copy()
     dbelow[db] = 0.0
-    incinds = range(N)
+    incinds = np.arange(N)
     chistats = np.sum(db[incinds][:,incinds], axis=0)
     while np.sum(chistats) > 0:
-        incarr = np.array(incinds)
         inds = np.flipud(np.argsort(chistats))
-        #print(incarr[inds])
+        #print(incinds[inds])
         #print(chistats[inds])
         topinds = inds[chistats[inds] == chistats[inds[0]]]
-        #print(incarr[topinds])
-        maxs = np.max(dbelow[incarr[topinds]], axis=1)
+        #print(incinds[topinds])
+        maxs = np.max(dbelow[incinds[topinds]], axis=1)
         #print(maxs)
         maxind = topinds[np.argmax(maxs)]
-        #print(incarr[maxind])
-        dbelow[incarr[maxind],:] = 0.0
-        dbelow[:,incarr[maxind]] = 0.0
-        incinds.remove(incinds[maxind])
+        #print(incinds[maxind])
+        dbelow[incinds[maxind],:] = 0.0
+        dbelow[:,incinds[maxind]] = 0.0
+        incinds = incinds[incinds != maxind]
         #print(incinds)
         #print("")
         chistats = np.sum(db[incinds][:,incinds], axis=0)
