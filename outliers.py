@@ -52,22 +52,8 @@ def plot_outliers(filtered, first, aver, inclist, cdm, threshold):
     plt.show()
 
 
-def filter_outliers(reps, threshold=1.0, plot=1):
-    """Filter by removing repetitions having mutual chisq above `threshold`.
-
-    Returns a tuple containing the included indices and the condensed
-    distance matrix.
-
-    Repetitions are removed iteratively by checking which repetition
-    contributes the largest number of over the threshold chi-squared values
-    (outliers) in the chisq-distance matrix, and removing that point.
-    If two repetitions cause an equal number of outliers, the repetition
-    which has the highest chisq distance to a non-outlier distance matrix
-    point is removed.
-    """
-    N = reps.shape[0]
-    cdm = chi2cdm(reps)
-    dmat = squareform(cdm)
+def filter_distmat(dmat, threshold):
+    N = dmat.shape[0]
     db = dmat > threshold
     dbelow = dmat.copy()
     dbelow[db] = 0.0
@@ -90,6 +76,25 @@ def filter_outliers(reps, threshold=1.0, plot=1):
         #print(incinds)
         #print("")
         chistats = np.sum(db[incinds][:,incinds], axis=0)
+    return list(incinds)
+
+
+def filter_outliers(reps, threshold=1.0, plot=1):
+    """Filter by removing repetitions having mutual chisq above `threshold`.
+
+    Returns a tuple containing the included indices and the condensed
+    distance matrix.
+
+    Repetitions are removed iteratively by checking which repetition
+    contributes the largest number of over the threshold chi-squared values
+    (outliers) in the chisq-distance matrix, and removing that point.
+    If two repetitions cause an equal number of outliers, the repetition
+    which has the highest chisq distance to a non-outlier distance matrix
+    point is removed.
+    """
+    cdm = chi2cdm(reps)
+    dmat = squareform(cdm)
+    incinds = filter_distmat(dmat, threshold)
 
     if plot:
         first = reps[0,...]
