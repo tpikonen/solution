@@ -28,6 +28,9 @@ def main():
     oprs.add_option("-s", "--scannumber",
         action="store", type="int", dest="scannumber", default=-1,
         help="Only process the scan number given here.")
+    oprs.add_option("-e", "--eiger",
+        action="store_true", dest="eiger", default=False,
+        help="Process Eiger frames.")
     (opts, args) = oprs.parse_args()
     scanfile = None
     if opts.scannumber < 0:
@@ -35,7 +38,7 @@ def main():
             oprs.error("Scanfile argument required")
         else:
             scanfile = args[0]
-    stack_files(scanfile, opts.conf, opts.outdir, opts.modulus, scannumber=opts.scannumber)
+    stack_files(scanfile, opts.conf, opts.outdir, opts.modulus, opts.eiger, scannumber=opts.scannumber)
 
 
 if __name__ == "__main__":
