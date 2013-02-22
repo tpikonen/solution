@@ -1,0 +1,60 @@
+#!/usr/bin/env python
+
+import numpy as np
+import matplotlib.pyplot as plt
+import h5py, os
+from optparse import OptionParser
+from solution.xformats.utils import maybe_uncompress
+from solution.xformats.detformats import read_mask
+from solution.plots import logshow
+
+description="Show a frame from Eiger."
+
+usage="%prog file1.h5"
+
+default_index  = 0
+
+def main():
+    oprs = OptionParser(usage=usage, description=description)
+    oprs.add_option("-i", "--index",
+        action="store", type="int", dest="index", default=default_index,
+        help="Show a frame with this index in the image stack, default %d." \
+            % (default_index))
+    oprs.add_option("-l", "--linear",
+        action="store_true", dest="linear", default=False,
+        help="Show the plot in linear color scale, instead of log10-scale.")
+    oprs.add_option("-m", "--maskfile",
+        action="store", type="string", dest="maskfile", default=None)
+    (opts, args) = oprs.parse_args()
+    if(len(args) < 1):
+        oprs.error("Input file argument required.")
+
+    mask = None
+    if opts.maskfile is not None:
+        mask = read_mask(opts.maskfile)
+
+    filename, is_temporary = maybe_uncompress(args[0])
+    f = h5py.File(filename, "r")
+    print("HDF5 /eh5/images data set with %s elements." \
+        % str(f['eh5']['images'].shape))
+    print("Frame %d." % opts.index)
+    frame = f['eh5']['images'][opts.index]
+    tstr = "%s, frame %d\nMax = %d" % (args[0], opts.index, np.max(frame.flat))
+    if mask is not None:
+        frame = frame*mask
+    if opts.linear:
+        plt.imshow(frame, interpolation='nearest')
+        tstr = tstr + ", linear scale."
+    else:
+        logshow(frame)
+        tstr = tstr + ", log10 scale."
+    f.close()
+    if is_temporary:
+        os.remove(filename)
+    plt.title(tstr)
+    plt.colorbar()
+    plt.show()
+
+if __name__ == "__main__":
+    main()
+
