@@ -95,6 +95,7 @@ def get_binned(indices, framefile):
 
 
 def eiger_binned(indices, framefile):
+    print(framefile)
     fr = read_eiger(framefile)
     stats = r.binstats(indices, fr.im, calculate=(1,0,1,1))
     return (stats[0], stats[2])
@@ -226,6 +227,7 @@ def stack_eiger(conf, scanno, specscans, radind, modulus=10):
     numreps = scanlen / modulus
     stack = np.zeros((modulus, numreps, 3, len(q)))
     fnames = [ [] for x in range(modulus) ]
+    dvals = [ [] for x in range(modulus) ]
 
     for posno in range(modulus):
         print("scan #%d, pos %d" % (scanno, posno))
@@ -241,9 +243,10 @@ def stack_eiger(conf, scanno, specscans, radind, modulus=10):
             stack[posno, repno, 2, :] = err/dval
             md5 = md5_file(frname)
             fnames[posno].append((frname, md5))
+            dvals[posno].append(dval)
             repno = repno+1
 
-    return stack, fnames
+    return stack, fnames, dvals
 
 
 def stack_scan(conf, scanno, specscans, radind, modulus=10):
